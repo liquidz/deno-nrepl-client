@@ -1,6 +1,6 @@
 import * as bencode from "../deno-bencode/mod.ts";
 import { BufReader, BufWriter, v4 } from "./deps.ts";
-import { getId, isDone } from "./response.ts";
+import { getId, isDone, Responses } from "./response.ts";
 
 const text = await Deno.readTextFile(
   "/Users/uochan/src/github.com/liquidz/antq/.nrepl-port",
@@ -15,9 +15,11 @@ async function delay(t: number) {
 }
 
 type RequestBody = {
-  resolve: (some: unknown) => unknown;
-  responses: bencode.Bencode[];
+  resolve: (value: Responses) => void;
+  responses: Responses;
 };
+
+const defaultResponseHook = ((resp: Response) => resp);
 
 class Nrepl {
   #connection: Deno.Conn | null;
@@ -26,6 +28,7 @@ class Nrepl {
   // #stdoutCallback: (text: string) => void;
   // #stderrCallback: (text: string) => void;
 
+  #responseHook: (resp: Response) => Response;
   #requestManager: { [property: string]: RequestBody };
 
   constructor() {
@@ -33,21 +36,28 @@ class Nrepl {
     this.#reader = null;
     this.#writer = null;
     this.#requestManager = {};
+    this.#responseHook = defaultResponseHook;
   }
 
   async readLoop() {
     while (this.#reader !== null) {
       try {
-        const res = await bencode.read(this.#reader);
+        const originalRes = await bencode.read(this.#reader);
+        if (!bencode.isObject(originalRes)) continue;
 
-        console.log(res);
+        const res = this.#responseHook(originalRes);
+        // TODO stdout stderr callback here
+
+        const id = getId(res);
+        if (id === null) continue;
+        const req = this.#requestManager[id];
+
+        if (req === undefined) continue;
+        req["responses"].push(res);
+
         if (isDone(res)) {
-          const id = getId(res);
-          if (id === null) continue;
-
-          const req = this.#requestManager[id];
-          if (req === undefined) continue;
-          req["resolve"](res);
+          req["resolve"](req["responses"]);
+          delete this.#requestManager[id];
         }
       } catch (err) {
         return;
@@ -74,19 +84,19 @@ class Nrepl {
     this.#writer = null;
   }
 
-  async send(message: bencode.Bencode): Promise<unknown> {
-    if (this.#writer === null) return "";
+  async send(message: bencode.Bencode): Promise<Responses> {
+    if (this.#writer === null) return [];
     if (!bencode.isObject(message)) {
-      throw Error("nrepl: message must be object");
+      throw Error("nrepl: message must be an object");
     }
 
     const id = message["id"] ?? v4.generate();
     if (typeof id !== "string") {
-      throw Error("nrepl: id must be string");
+      throw Error("nrepl: id must be a string");
     }
 
     message["id"] = id;
-    const result = new Promise((resolve) => {
+    const result = new Promise<Responses>((resolve) => {
       this.#requestManager[id] = {
         resolve: resolve,
         responses: [],
@@ -97,15 +107,26 @@ class Nrepl {
 
     return result;
   }
-  //    return result
 }
 
 const nrepl = new Nrepl();
 await nrepl.connect("127.0.0.1", port);
-const xxx = await nrepl.send({ op: "clone", id: "123" });
+//const xxx = await nrepl.send({ op: "clone", id: "123" });
+const xxx = await nrepl.send({
+  op: "eval",
+  id: "123",
+  code: `(do (println "foobar") (+ 1 2 3))(+ 2 3 4)`,
+});
 
 await delay(1000);
 nrepl.disconnect();
 
 console.log("yyyyyy");
 console.log(xxx);
+console.log(typeof xxx);
+//console.log(mergeResponses(xxx));
+// if (typeof xxx === "object" && xxx !== null) {
+//   if (bencode.isArray(xxx)) {
+//     console.log(mergeResponses(xxx));
+//   }
+// }
