@@ -1,9 +1,9 @@
 import * as bencode from "../deno-bencode/mod.ts";
 import { BufReader, BufWriter, v4 } from "./deps.ts";
-import { getId, isDone, Responses } from "./response.ts";
+import { getId, isDone, mergeResponses } from "./response.ts";
 
 const text = await Deno.readTextFile(
-  "/Users/uochan/src/github.com/liquidz/antq/.nrepl-port",
+  "../antq/.nrepl-port",
 );
 const port = parseInt(text);
 if (port === NaN) {
@@ -15,28 +15,26 @@ async function delay(t: number) {
 }
 
 type RequestBody = {
-  resolve: (value: Responses) => void;
-  responses: Responses;
+  resolve: (value: bencode.Bencode[]) => void;
+  responses: bencode.Bencode[];
 };
 
-const defaultResponseHook = ((resp: Response) => resp);
+const defaultResponseHook = ((resp: bencode.BencodeObject) => resp);
+type ResponseHook = typeof defaultResponseHook;
 
 class Nrepl {
   #connection: Deno.Conn | null;
   #reader: BufReader | null;
   #writer: BufWriter | null;
-  // #stdoutCallback: (text: string) => void;
-  // #stderrCallback: (text: string) => void;
-
-  #responseHook: (resp: Response) => Response;
+  #responseHook: ResponseHook;
   #requestManager: { [property: string]: RequestBody };
 
-  constructor() {
+  constructor(hook?: ResponseHook) {
     this.#connection = null;
     this.#reader = null;
     this.#writer = null;
     this.#requestManager = {};
-    this.#responseHook = defaultResponseHook;
+    this.#responseHook = hook ?? defaultResponseHook;
   }
 
   async readLoop() {
@@ -84,7 +82,7 @@ class Nrepl {
     this.#writer = null;
   }
 
-  async send(message: bencode.Bencode): Promise<Responses> {
+  async send(message: bencode.Bencode): Promise<bencode.Bencode[]> {
     if (this.#writer === null) return [];
     if (!bencode.isObject(message)) {
       throw Error("nrepl: message must be an object");
@@ -96,7 +94,7 @@ class Nrepl {
     }
 
     message["id"] = id;
-    const result = new Promise<Responses>((resolve) => {
+    const result = new Promise<bencode.Bencode[]>((resolve) => {
       this.#requestManager[id] = {
         resolve: resolve,
         responses: [],
@@ -123,8 +121,7 @@ nrepl.disconnect();
 
 console.log("yyyyyy");
 console.log(xxx);
-console.log(typeof xxx);
-//console.log(mergeResponses(xxx));
+console.log(mergeResponses(xxx));
 // if (typeof xxx === "object" && xxx !== null) {
 //   if (bencode.isArray(xxx)) {
 //     console.log(mergeResponses(xxx));

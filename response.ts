@@ -20,7 +20,7 @@ export function getId(resp: bencode.Bencode): string | null {
   return (typeof id === "string") ? id : null;
 }
 
-export function mergeResponses(resps: Responses): Response {
+export function mergeResponses(resps: bencode.Bencode[]): bencode.Bencode {
   const res: Response = {};
   for (const resp of resps) {
     if (!bencode.isObject(resp)) continue;
