@@ -1,18 +1,7 @@
 import * as bencode from "../deno-bencode/mod.ts";
 import { BufReader, BufWriter, v4 } from "./deps.ts";
-import { getId, isDone, mergeResponses } from "./response.ts";
-
-const text = await Deno.readTextFile(
-  "../antq/.nrepl-port",
-);
-const port = parseInt(text);
-if (port === NaN) {
-  throw Error("FIXME");
-}
-
-async function delay(t: number) {
-  return new Promise((resolve) => setTimeout(resolve, t));
-}
+import { getId, isDone } from "./response.ts";
+import { AbstractREPL } from "./repl.ts";
 
 type RequestBody = {
   resolve: (value: bencode.Bencode[]) => void;
@@ -22,7 +11,7 @@ type RequestBody = {
 const defaultResponseHook = ((resp: bencode.BencodeObject) => resp);
 type ResponseHook = typeof defaultResponseHook;
 
-class Nrepl {
+export class nREPL extends AbstractREPL<bencode.Bencode> {
   #connection: Deno.Conn | null;
   #reader: BufReader | null;
   #writer: BufWriter | null;
@@ -30,6 +19,7 @@ class Nrepl {
   #requestManager: { [property: string]: RequestBody };
 
   constructor(hook?: ResponseHook) {
+    super();
     this.#connection = null;
     this.#reader = null;
     this.#writer = null;
@@ -106,24 +96,3 @@ class Nrepl {
     return result;
   }
 }
-
-const nrepl = new Nrepl();
-await nrepl.connect("127.0.0.1", port);
-//const xxx = await nrepl.send({ op: "clone", id: "123" });
-const xxx = await nrepl.send({
-  op: "eval",
-  id: "123",
-  code: `(do (println "foobar") (+ 1 2 3))(+ 2 3 4)`,
-});
-
-await delay(1000);
-nrepl.disconnect();
-
-console.log("yyyyyy");
-console.log(xxx);
-console.log(mergeResponses(xxx));
-// if (typeof xxx === "object" && xxx !== null) {
-//   if (bencode.isArray(xxx)) {
-//     console.log(mergeResponses(xxx));
-//   }
-// }
