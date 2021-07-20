@@ -1,6 +1,4 @@
-export { BufReader, BufWriter } from "https://deno.land/std@0.88.0/io/bufio.ts";
-export { v4 } from "https://deno.land/std@0.88.0/uuid/mod.ts";
-
-// export { StringReader } from "https://deno.land/std@0.88.0/io/readers.ts";
-// export { StringWriter } from "https://deno.land/std@0.88.0/io/writers.ts";
-// export * as asserts from "https://deno.land/std@0.84.0/testing/asserts.ts";
+export * as async from "https://deno.land/std@0.102.0/async/mod.ts";
+export * as bencode from "https://deno.land/x/deno_bencode@1.0.0/mod.ts";
+export * as bufio from "https://deno.land/std@0.102.0/io/bufio.ts";
+export * as uuid from "https://deno.land/std@0.102.0/uuid/mod.ts";
