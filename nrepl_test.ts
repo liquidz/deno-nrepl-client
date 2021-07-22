@@ -1,24 +1,40 @@
 import { bencode, bufio } from "./deps.ts";
 //import * as nrepl from "./nrepl.ts";
-import { NreplClientImpl } from "./impl/nrepl.ts";
-// import { asserts } from "./test_deps.ts";
-import { NreplClient, NreplResponse } from "./types.ts";
+import { NreplClientImpl, readResponse, writeRequest } from "./impl/nrepl.ts";
+import { asserts, readers, writers } from "./test_deps.ts";
+import { NreplClient, NreplResponse, RequestManager } from "./types.ts";
 
-// function dummyConn(r: Deno.Reader, w: Deno.Writer): Deno.Conn {
-//   //function dummyConn(): Deno.Conn {
-//   return {
-//     rid: -1,
-//     closeWrite: () => Promise.resolve(),
-//     read: (x: Uint8Array): Promise<number | null> => r.read(x),
-//     write: (x: Uint8Array): Promise<number> => w.write(x),
-//
-//     // read: (_x: Uint8Array): Promise<number | null> => Promise.resolve(0),
-//     // write: (_x: Uint8Array): Promise<number> => Promise.resolve(0),
-//     close: (): void => {},
-//     localAddr: { transport: "tcp", hostname: "0.0.0.0", port: 0 },
-//     remoteAddr: { transport: "tcp", hostname: "0.0.0.0", port: 0 },
-//   };
-// }
+//function dummyConn(r: Deno.Reader, w: Deno.Writer): Deno.Conn {
+function dummyConn(): Deno.Conn {
+  return {
+    rid: -1,
+    closeWrite: () => Promise.resolve(),
+    // read: (x: Uint8Array): Promise<number | null> => r.read(x),
+    // write: (x: Uint8Array): Promise<number> => w.write(x),
+
+    read: (_x: Uint8Array): Promise<number | null> => Promise.resolve(0),
+    write: (_x: Uint8Array): Promise<number> => Promise.resolve(0),
+    close: (): void => {},
+    localAddr: { transport: "tcp", hostname: "0.0.0.0", port: 0 },
+    remoteAddr: { transport: "tcp", hostname: "0.0.0.0", port: 0 },
+  };
+}
+
+async function delay(t: number) {
+  return new Promise((resolve) => setTimeout(resolve, t));
+}
+
+const strWriter = new writers.StringWriter();
+const bufWriter = new bufio.BufWriter(strWriter);
+const reqManager: RequestManager = {};
+
+const x = writeRequest(bufWriter, { op: "clone" }, { foo: "bar" }, reqManager);
+
+await delay(1000);
+
+console.log(reqManager);
+console.log(strWriter.toString());
+
 //
 // let _testResponses: bencode.Bencode[] = [];
 //
@@ -52,9 +68,6 @@ import { NreplClient, NreplResponse } from "./types.ts";
 // //   }
 // // }
 // //
-// // async function delay(t: number) {
-// //   return new Promise((resolve) => setTimeout(resolve, t));
-// // }
 // //
 // // console.log("AAAA");
 // //
