@@ -1,24 +1,4 @@
-import { bencode, bufio } from "./deps.ts";
-
-export type BencodeReader = (
-  input: bufio.BufReader,
-) => Promise<bencode.Bencode>;
-
-export type BencodeWriter = (
-  output: bufio.BufWriter,
-  x: bencode.Bencode,
-) => Promise<number>;
-
-export type ConnectOptions = {
-  conn: Deno.Conn;
-  bufReader?: bufio.BufReader;
-  bufWriter?: bufio.BufWriter;
-  bencodeReader?: BencodeReader;
-  bencodeWriter?: BencodeWriter;
-
-  host?: string;
-  port?: number;
-};
+import { async, bencode, bufio } from "./deps.ts";
 
 export interface Response {
   context: Context;
@@ -47,3 +27,11 @@ export interface nREPLClient {
   read(): Promise<Response>;
   write(message: Request, context?: Context): Promise<DoneResponse>;
 }
+
+type RequestBody = {
+  d: async.Deferred<DoneResponse>;
+  responses: Response[];
+  context: Context;
+};
+
+export type RequestManager = Record<string, RequestBody>;

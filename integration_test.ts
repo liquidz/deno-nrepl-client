@@ -35,7 +35,7 @@ async function handler(conn: nREPLClient) {
 
 async function setUp(): Promise<void> {
   const port = await getTestPort();
-  _conn = await nrepl.connect({ hostname: "127.0.0.1", port: port });
+  _conn = await nrepl.connect({ port: port });
   _responses = [];
   handler(_conn);
 }
