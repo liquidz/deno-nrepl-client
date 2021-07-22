@@ -1,78 +1,76 @@
-import * as nrepl from "./nrepl.ts";
-import { asserts } from "./test_deps.ts";
+import { bencode, bufio } from "./deps.ts";
+//import * as nrepl from "./nrepl.ts";
+import { nREPLImpl } from "./impl/nrepl.ts";
+// import { asserts } from "./test_deps.ts";
 import { nREPL, Response } from "./types.ts";
 
-let _conn: nREPL;
-let _responses: Response[] = [];
-
-async function getTestPort(): Promise<number> {
-  const text = await Deno.readTextFile(
-    "./test/.nrepl-port",
-  );
-  const port = parseInt(text);
-  if (port === NaN) {
-    throw Error("FIXME");
-  }
-  return port;
-}
-
-async function delay(t: number) {
-  return new Promise((resolve) => setTimeout(resolve, t));
-}
-
-async function handler(conn: nREPL) {
-  try {
-    while (!nrepl.isClosed(conn)) {
-      const res = await nrepl.read(conn);
-      _responses.push(res);
-    }
-  } catch (err) {
-    if (!nrepl.isClosed(conn)) {
-      nrepl.close(conn);
-    }
-  }
-}
-
-async function setUp(): Promise<void> {
-  const port = await getTestPort();
-  _conn = await nrepl.connect({ port: port });
-  _responses = [];
-  handler(_conn);
-}
-
-async function tearDown(): Promise<void> {
-  await delay(1000);
-  nrepl.close(_conn);
-}
-
-Deno.test("FIXME", async () => {
-  await setUp();
-  try {
-    const cloneRes = await nrepl.write(_conn, { op: "clone" });
-    asserts.assert(cloneRes.id() !== "");
-    const session = cloneRes.get("new-session");
-    asserts.assert(session !== "");
-
-    const evalRes = await nrepl.write(_conn, {
-      op: "eval",
-      code: `(do (println "hello") (+ 1 2 3))`,
-      session: session,
-    });
-    asserts.assertEquals(evalRes.get("value"), "6");
-  } finally {
-    await tearDown();
-  }
-});
-
-// const conn = await nrepl.connect({ port: port });
+// //function dummyConn(r: Deno.Reader, w: Deno.Writer): Deno.Conn {
+// function dummyConn(): Deno.Conn {
+//   return {
+//     rid: -1,
+//     closeWrite: () => Promise.resolve(),
+//     // read: (x: Uint8Array): Promise<number | null> => r.read(x),
+//     // write: (x: Uint8Array): Promise<number> => w.write(x),
 //
-// const cloneRes = await nrepl.write(conn, { op: "clone" });
-// const evalRes = await nrepl.write(conn, {
-//   op: "eval",
-//   code: `(do (println "hello") (+ 1 2 3))`,
-//   session: session,
+//     read: (_x: Uint8Array): Promise<number | null> => Promise.resolve(0),
+//     write: (_x: Uint8Array): Promise<number> => Promise.resolve(0),
+//     close: (): void => {},
+//     localAddr: { transport: "tcp", hostname: "0.0.0.0", port: 0 },
+//     remoteAddr: { transport: "tcp", hostname: "0.0.0.0", port: 0 },
+//   };
+// }
+//
+// let _testResponses: bencode.Bencode[] = [];
+//
+// async function testBencodeReader(
+//   _input: bufio.BufReader,
+// ): Promise<bencode.Bencode> {
+//   const res = _testResponses.pop();
+//   return (res === undefined) ? null : res;
+// }
+//
+// async function testBencodeWriter(
+//   _output: bufio.BufWriter,
+//   x: bencode.Bencode,
+// ): Promise<number> {
+//   if (!bencode.isObject(x)) return -1;
+//   const id = x["id"] || "dummy id";
+//   _testResponses.push({ id: id, req: x });
+//   return 0;
+// }
+//
+// async function handler(conn: nREPL) {
+//   try {
+//     while (!conn.isClosed) {
+//       const res = await conn.read();
+//       console.log(res);
+//     }
+//   } catch (err) {
+//     if (!conn.isClosed) {
+//       conn.close();
+//     }
+//   }
+// }
+//
+// async function delay(t: number) {
+//   return new Promise((resolve) => setTimeout(resolve, t));
+// }
+//
+// console.log("AAAA");
+//
+// const x = new nREPLImpl({
+//   conn: dummyConn(),
+//   bencodeReader: testBencodeReader,
+//   bencodeWriter: testBencodeWriter,
 // });
+// handler(x);
+// console.log("BBBB");
 //
-// //console.log(cloneRes);
-// console.log(evalRes);
-// // cloneRes.responses;
+// const r = await x.write({ op: "clone" });
+//
+// await delay(1000);
+// console.log(r);
+//
+// x.close();
+// //
+// // nrepl.connect()

@@ -10,15 +10,21 @@ export type BencodeWriter = (
 ) => Promise<number>;
 
 export type ConnectOptions = {
-  hostname?: string;
-  port: number;
+  conn: Deno.Conn;
+  bufReader?: bufio.BufReader;
+  bufWriter?: bufio.BufWriter;
   bencodeReader?: BencodeReader;
   bencodeWriter?: BencodeWriter;
+
+  host?: string;
+  port?: number;
 };
 
 export interface Response {
+  context: Context;
   id(): string | null;
-  get(key: string): bencode.Bencode;
+  getFirst(key: string): bencode.Bencode;
+  getAll(key: string): bencode.Bencode[];
   isDone(): boolean;
 }
 
@@ -26,21 +32,17 @@ export type Request = bencode.BencodeObject;
 
 export type Context = Record<string, string>;
 
-export abstract class DoneResponse implements Response {
-  readonly responses: Response[] = [];
-  readonly context: Context = {};
-
-  abstract id(): string | null;
-  abstract get(key: string): bencode.Bencode;
-  abstract isDone(): boolean;
+export interface DoneResponse extends Response {
+  readonly responses: Response[];
+  readonly context: Context;
 }
 
 export interface nREPL {
-  readonly hostname: string;
-  readonly port: number;
+  readonly conn: Deno.Conn;
+  readonly bufReader: bufio.BufReader;
+  readonly bufWriter: bufio.BufWriter;
   readonly isClosed: boolean;
 
-  connect(): void;
   close(): void;
   read(): Promise<Response>;
   write(message: Request, context?: Context): Promise<DoneResponse>;
