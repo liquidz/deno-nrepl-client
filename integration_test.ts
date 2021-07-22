@@ -1,8 +1,8 @@
 import * as nrepl from "./nrepl.ts";
 import { asserts } from "./test_deps.ts";
-import { nREPL, Response } from "./types.ts";
+import { nREPLClient, Response } from "./types.ts";
 
-let _conn: nREPL;
+let _conn: nREPLClient;
 let _responses: Response[] = [];
 
 async function getTestPort(): Promise<number> {
@@ -20,7 +20,7 @@ async function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
-async function handler(conn: nREPL) {
+async function handler(conn: nREPLClient) {
   try {
     while (!conn.isClosed) {
       const res = await conn.read();

@@ -4,7 +4,7 @@ import {
   ConnectOptions,
   Context,
   DoneResponse,
-  nREPL,
+  nREPLClient,
   Request,
   Response,
 } from "../types.ts";
@@ -17,7 +17,7 @@ type RequestBody = {
   context: Context;
 };
 
-export class nREPLImpl implements nREPL {
+export class nREPLClientImpl implements nREPLClient {
   readonly conn: Deno.Conn;
   readonly bufReader: bufio.BufReader;
   readonly bufWriter: bufio.BufWriter;

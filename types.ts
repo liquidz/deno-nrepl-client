@@ -37,7 +37,7 @@ export interface DoneResponse extends Response {
   readonly context: Context;
 }
 
-export interface nREPL {
+export interface nREPLClient {
   readonly conn: Deno.Conn;
   readonly bufReader: bufio.BufReader;
   readonly bufWriter: bufio.BufWriter;

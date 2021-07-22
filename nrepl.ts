@@ -1,12 +1,12 @@
-import { nREPLImpl } from "./impl/nrepl.ts";
-import { nREPL } from "./types.ts";
+import { nREPLClientImpl } from "./impl/nrepl.ts";
+import { nREPLClient } from "./types.ts";
 
 export async function connect(
   { hostname, port }: { hostname: string; port: number },
-): Promise<nREPL> {
+): Promise<nREPLClient> {
   const conn = await Deno.connect({
     hostname: hostname,
     port: port,
   });
-  return new nREPLImpl({ conn: conn });
+  return new nREPLClientImpl({ conn: conn });
 }

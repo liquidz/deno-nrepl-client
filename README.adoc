@@ -1,4 +1,4 @@
-= deno-nrepl
+= deno-nrepl-client
 
 - TODO
 

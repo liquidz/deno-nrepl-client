@@ -1,8 +1,8 @@
 import { bencode, bufio } from "./deps.ts";
 //import * as nrepl from "./nrepl.ts";
-import { nREPLImpl } from "./impl/nrepl.ts";
+import { nREPLClientImpl } from "./impl/nrepl.ts";
 // import { asserts } from "./test_deps.ts";
-import { nREPL, Response } from "./types.ts";
+import { nREPLClient, Response } from "./types.ts";
 
 // //function dummyConn(r: Deno.Reader, w: Deno.Writer): Deno.Conn {
 // function dummyConn(): Deno.Conn {
