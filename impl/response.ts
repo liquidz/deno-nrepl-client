@@ -1,7 +1,7 @@
-import { Context, DoneResponse, Response } from "../types.ts";
+import { Context, NreplDoneResponse, NreplResponse } from "../types.ts";
 import { bencode } from "../deps.ts";
 
-export class ResponseImpl implements Response {
+export class NreplResponseImpl implements NreplResponse {
   readonly response: bencode.BencodeObject;
   readonly context: Context;
 
@@ -32,12 +32,12 @@ export class ResponseImpl implements Response {
   }
 }
 
-export class DoneResponseImpl implements DoneResponse {
-  readonly responses: Response[];
+export class NreplDoneResponseImpl implements NreplDoneResponse {
+  readonly responses: NreplResponse[];
   readonly context: Context;
 
   constructor(
-    { responses, context }: { responses: Response[]; context: Context },
+    { responses, context }: { responses: NreplResponse[]; context: Context },
   ) {
     this.responses = responses;
     this.context = context;

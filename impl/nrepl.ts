@@ -1,23 +1,23 @@
 import {
   Context,
-  DoneResponse,
-  nREPLClient,
-  Request,
+  NreplClient,
+  NreplDoneResponse,
+  NreplRequest,
+  NreplResponse,
   RequestManager,
-  Response,
 } from "../types.ts";
-import { DoneResponseImpl, ResponseImpl } from "./response.ts";
+import { NreplDoneResponseImpl, NreplResponseImpl } from "./response.ts";
 import { async, bencode, bufio } from "../deps.ts";
 
 export async function readResponse(
   bufReader: bufio.BufReader,
   reqManager?: RequestManager,
-): Promise<Response> {
+): Promise<NreplResponse> {
   const originalRes = await bencode.read(bufReader);
   if (!bencode.isObject(originalRes)) {
     return Promise.reject(new Deno.errors.InvalidData());
   }
-  const res = new ResponseImpl(originalRes);
+  const res = new NreplResponseImpl(originalRes);
 
   const id = res.id();
   if (id !== null) {
@@ -26,7 +26,7 @@ export async function readResponse(
 
     if (res.isDone()) {
       req.d.resolve(
-        new DoneResponseImpl({
+        new NreplDoneResponseImpl({
           responses: req.responses,
           context: req.context,
         }),
@@ -40,10 +40,10 @@ export async function readResponse(
 
 export async function writeRequest(
   bufWriter: bufio.BufWriter,
-  message: Request,
+  message: NreplRequest,
   context?: Context,
   reqManager?: RequestManager,
-): Promise<DoneResponse> {
+): Promise<NreplDoneResponse> {
   if (!bencode.isObject(message)) {
     return Promise.reject(Deno.errors.InvalidData());
   }
@@ -53,7 +53,7 @@ export async function writeRequest(
     throw Error("nrepl: id must be a string");
   }
 
-  const d = async.deferred<DoneResponse>();
+  const d = async.deferred<NreplDoneResponse>();
   (reqManager || {})[id] = {
     d: d,
     context: context || {},
@@ -66,7 +66,7 @@ export async function writeRequest(
   return d;
 }
 
-export class nREPLClientImpl implements nREPLClient {
+export class NreplClientImpl implements NreplClient {
   readonly conn: Deno.Conn;
   readonly bufReader: bufio.BufReader;
   readonly bufWriter: bufio.BufWriter;
@@ -98,11 +98,14 @@ export class nREPLClientImpl implements nREPLClient {
     this.conn.close();
   }
 
-  async read(): Promise<Response> {
+  async read(): Promise<NreplResponse> {
     return await readResponse(this.bufReader, this.#reqManager);
   }
 
-  async write(message: Request, context?: Context): Promise<DoneResponse> {
+  async write(
+    message: NreplRequest,
+    context?: Context,
+  ): Promise<NreplDoneResponse> {
     return await writeRequest(
       this.bufWriter,
       message,
@@ -111,88 +114,3 @@ export class nREPLClientImpl implements nREPLClient {
     );
   }
 }
-
-// type RequestBody = {
-//   d: async.Deferred<DoneResponse>;
-//   responses: Response[];
-//   context: Context;
-// };
-//
-// export class nREPLClientImpl implements nREPLClient {
-//   readonly conn: Deno.Conn;
-//   readonly bufReader: bufio.BufReader;
-//   readonly bufWriter: bufio.BufWriter;
-//   readonly bencodeReader: BencodeReader;
-//   readonly bencodeWriter: BencodeWriter;
-//
-//   #closed: boolean;
-//   #requestManager: Record<string, RequestBody> = {};
-//
-//   constructor(options: ConnectOptions) {
-//     this.conn = options.conn;
-//     this.bufReader = options.bufReader || new bufio.BufReader(this.conn);
-//     this.bufWriter = options.bufWriter || new bufio.BufWriter(this.conn);
-//     this.bencodeReader = options.bencodeReader || bencode.read;
-//     this.bencodeWriter = options.bencodeWriter || bencode.write;
-//
-//     this.#closed = false;
-//   }
-//
-//   get isClosed(): boolean {
-//     return this.#closed;
-//   }
-//
-//   close() {
-//     this.#closed = true;
-//     this.conn.close();
-//   }
-//
-//   async read(): Promise<Response> {
-//     const originalRes = await this.bencodeReader(this.bufReader);
-//     if (!bencode.isObject(originalRes)) {
-//       return Promise.reject(new Deno.errors.InvalidData());
-//     }
-//     const res = new ResponseImpl(originalRes);
-//
-//     const id = res.id();
-//     if (id !== null) {
-//       const req = this.#requestManager[id];
-//       req.responses.push(res);
-//
-//       if (res.isDone()) {
-//         req.d.resolve(
-//           new DoneResponseImpl({
-//             responses: req.responses,
-//             context: req.context,
-//           }),
-//         );
-//         delete this.#requestManager[id];
-//       }
-//     }
-//
-//     return res;
-//   }
-//
-//   async write(message: Request, context?: Context): Promise<DoneResponse> {
-//     if (!bencode.isObject(message)) {
-//       return Promise.reject(Deno.errors.InvalidData());
-//     }
-//
-//     const id = message["id"] ?? crypto.randomUUID();
-//     if (typeof id !== "string") {
-//       throw Error("nrepl: id must be a string");
-//     }
-//
-//     const d = async.deferred<DoneResponse>();
-//     this.#requestManager[id] = {
-//       d: d,
-//       context: context || {},
-//       responses: [],
-//     };
-//
-//     message["id"] = id;
-//     await this.bencodeWriter(this.bufWriter, message);
-//
-//     return d;
-//   }
-// }

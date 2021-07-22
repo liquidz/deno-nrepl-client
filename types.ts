@@ -1,6 +1,6 @@
 import { async, bencode, bufio } from "./deps.ts";
 
-export interface Response {
+export interface NreplResponse {
   context: Context;
   id(): string | null;
   getFirst(key: string): bencode.Bencode;
@@ -8,29 +8,29 @@ export interface Response {
   isDone(): boolean;
 }
 
-export type Request = bencode.BencodeObject;
+export type NreplRequest = bencode.BencodeObject;
 
 export type Context = Record<string, string>;
 
-export interface DoneResponse extends Response {
-  readonly responses: Response[];
+export interface NreplDoneResponse extends NreplResponse {
+  readonly responses: NreplResponse[];
   readonly context: Context;
 }
 
-export interface nREPLClient {
+export interface NreplClient {
   readonly conn: Deno.Conn;
   readonly bufReader: bufio.BufReader;
   readonly bufWriter: bufio.BufWriter;
   readonly isClosed: boolean;
 
   close(): void;
-  read(): Promise<Response>;
-  write(message: Request, context?: Context): Promise<DoneResponse>;
+  read(): Promise<NreplResponse>;
+  write(message: NreplRequest, context?: Context): Promise<NreplDoneResponse>;
 }
 
 type RequestBody = {
-  d: async.Deferred<DoneResponse>;
-  responses: Response[];
+  d: async.Deferred<NreplDoneResponse>;
+  responses: NreplResponse[];
   context: Context;
 };
 

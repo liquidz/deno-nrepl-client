@@ -1,9 +1,9 @@
 import * as nrepl from "./nrepl.ts";
 import { asserts } from "./test_deps.ts";
-import { nREPLClient, Response } from "./types.ts";
+import { NreplClient, NreplResponse } from "./types.ts";
 
-let _conn: nREPLClient;
-let _responses: Response[] = [];
+let _conn: NreplClient;
+let _responses: NreplResponse[] = [];
 
 async function getTestPort(): Promise<number> {
   const text = await Deno.readTextFile(
@@ -20,7 +20,7 @@ async function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
-async function handler(conn: nREPLClient) {
+async function handler(conn: NreplClient) {
   try {
     while (!conn.isClosed) {
       const res = await conn.read();
