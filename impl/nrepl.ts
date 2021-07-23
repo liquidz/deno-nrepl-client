@@ -17,22 +17,26 @@ export async function readResponse(
   if (!bencode.isObject(originalRes)) {
     return Promise.reject(new Deno.errors.InvalidData());
   }
-  const res = new NreplResponseImpl(originalRes);
 
-  const id = res.id();
-  if (id !== null) {
-    const req = (reqManager || {})[id];
-    req.responses.push(res);
+  const id = originalRes["id"];
+  if (id == null || typeof id !== "string") {
+    return new NreplResponseImpl(originalRes);
+  }
 
-    if (res.isDone()) {
-      req.d.resolve(
-        new NreplDoneResponseImpl({
-          responses: req.responses,
-          context: req.context,
-        }),
-      );
-      delete (reqManager || {})[id];
-    }
+  const req = (reqManager || {})[id];
+  const res = new NreplResponseImpl(originalRes, req.context || {});
+
+  req.responses.push(res);
+
+  if (res.isDone()) {
+    console.log(req.context);
+    req.d.resolve(
+      new NreplDoneResponseImpl({
+        responses: req.responses,
+        context: req.context,
+      }),
+    );
+    delete (reqManager || {})[id];
   }
 
   return res;
