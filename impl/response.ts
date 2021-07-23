@@ -54,7 +54,7 @@ export class NreplDoneResponseImpl implements NreplDoneResponse {
   getFirst(key: string): bencode.Bencode {
     for (const res of this.responses) {
       const v = res.getFirst(key);
-      if (v === null) continue;
+      if (v == null) continue;
       return v;
     }
 

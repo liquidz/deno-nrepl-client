@@ -24,8 +24,11 @@ export async function readResponse(
   }
 
   const req = (reqManager || {})[id];
-  const res = new NreplResponseImpl(originalRes, req.context || {});
+  if (req == null) {
+    return new NreplResponseImpl(originalRes);
+  }
 
+  const res = new NreplResponseImpl(originalRes, req.context);
   req.responses.push(res);
 
   if (res.isDone()) {
