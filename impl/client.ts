@@ -32,7 +32,6 @@ export async function readResponse(
   req.responses.push(res);
 
   if (res.isDone()) {
-    console.log(req.context);
     req.d.resolve(
       new NreplDoneResponseImpl({
         responses: req.responses,
