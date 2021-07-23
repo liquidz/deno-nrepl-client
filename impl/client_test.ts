@@ -1,7 +1,7 @@
 import { async, bencode, bufio } from "../deps.ts";
 import { NreplDoneResponseImpl } from "./response.ts";
 import { readResponse, writeRequest } from "./client.ts";
-import { asserts, readers, writers } from "../test_deps.ts";
+import { asserts, readers, writers } from "../test/test_deps.ts";
 import { NreplDoneResponse, RequestManager } from "../types.ts";
 
 async function delay(t: number) {

@@ -1,5 +1,5 @@
 import * as nrepl from "./nrepl.ts";
-import { asserts } from "./test_deps.ts";
+import { asserts } from "./test/test_deps.ts";
 import { NreplClient, NreplResponse } from "./types.ts";
 
 let _conn: NreplClient;
