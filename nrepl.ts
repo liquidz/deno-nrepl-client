@@ -1,4 +1,4 @@
-import { NreplClientImpl } from "./impl/nrepl.ts";
+import { NreplClientImpl } from "./impl/client.ts";
 import { NreplClient } from "./types.ts";
 
 export async function connect(
