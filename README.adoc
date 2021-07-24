@@ -1,6 +1,10 @@
 = deno-nrepl-client
 
-- TODO
+image:https://github.com/liquidz/deno-nrepl-client/actions/workflows/test.yml/badge.svg["GitHub Actions for test workflow", link="https://github.com/liquidz/deno-nrepl-client/actions/workflows/test.yml"]
+
+== Usage
+
+See link:./integration_test.ts[integration_test.ts].
 
 == License
 
