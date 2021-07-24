@@ -8,14 +8,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '16'
-      - run: java -version
-      - uses: DeLaGuardo/setup-clojure@master
-        with:
-          tools-deps: latest
       - uses: actions/checkout@v2
       - uses: denoland/setup-deno@v1
         with:
@@ -26,6 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '16'
+      - run: java -version
+      - uses: DeLaGuardo/setup-clojure@master
+        with:
+          tools-deps: latest
       - uses: denoland/setup-deno@v1
         with:
           deno-version: ${{ env.DENO_VERSION }}

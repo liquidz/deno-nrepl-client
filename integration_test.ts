@@ -57,7 +57,7 @@ async function handler(conn: NreplClient) {
 }
 
 async function setUp(): Promise<void> {
-  _process = Deno.run({ cmd: ["clj", "-M:nrepl"], cwd: "./test" });
+  _process = Deno.run({ cmd: ["clojure", "-M:nrepl"], cwd: "./test" });
   await untilPortFileReady();
   const port = await getTestPort();
 
