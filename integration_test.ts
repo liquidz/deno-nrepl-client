@@ -11,15 +11,15 @@ async function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
-// async function until(f: () => boolean) {
-//   while (true) {
-//     if (await f()) {
-//       break;
-//     }
-//     console.log("waiting...");
-//     await delay(1000);
-//   }
-// }
+async function untilPortFileReady() {
+  while (true) {
+    if (await exists.exists(portFilePath)) {
+      break;
+    } else {
+      await delay(1000);
+    }
+  }
+}
 
 async function untilConnectionReady(port: number) {
   while (true) {
@@ -28,7 +28,6 @@ async function untilConnectionReady(port: number) {
       conn.close();
       break;
     } catch (err) {
-      console.log("waiting...");
       await delay(1000);
     }
   }
@@ -56,21 +55,10 @@ async function handler(conn: NreplClient) {
   }
 }
 
-// const p = Deno.run({ cmd: ["clj", "-M:nrepl"], cwd: "./test" });
-// const port = await getTestPort();
-//
-// await waitConnectionReady(port);
-//
-// console.log("ok");
-//
-// p.close();
-//
-// console.log("fin");
-
 async function setUp(): Promise<void> {
   _process = Deno.run({ cmd: ["clj", "-M:nrepl"], cwd: "./test" });
+  await untilPortFileReady();
   const port = await getTestPort();
-  console.log(`port = ${port}`);
 
   await untilConnectionReady(port);
 
@@ -101,7 +89,6 @@ Deno.test("Integration test", async () => {
 
     asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
     asserts.assertEquals(evalRes.context, { foo: "bar" });
-    //asserts.assertEquals(_responses, ["6"]);
   } finally {
     await tearDown();
   }
