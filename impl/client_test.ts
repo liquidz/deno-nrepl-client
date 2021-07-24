@@ -4,7 +4,7 @@ import { readResponse, writeRequest } from "./client.ts";
 import { asserts, readers, writers } from "../test/test_deps.ts";
 import { NreplDoneResponse, RequestManager } from "../types.ts";
 
-async function delay(t: number) {
+function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 

@@ -7,7 +7,7 @@ let _conn: NreplClient;
 let _responses: NreplResponse[] = [];
 const portFilePath = "./test/.nrepl-port";
 
-async function delay(t: number) {
+function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
@@ -27,7 +27,7 @@ async function untilConnectionReady(port: number) {
       const conn = await Deno.connect({ hostname: "127.0.0.1", port: port });
       conn.close();
       break;
-    } catch (err) {
+    } catch (_err) {
       await delay(1000);
     }
   }
@@ -36,8 +36,9 @@ async function untilConnectionReady(port: number) {
 async function getTestPort(): Promise<number> {
   const text = await Deno.readTextFile(portFilePath);
   const port = parseInt(text);
-  if (port === NaN) {
-    throw Error("FIXME");
+
+  if (isNaN(port)) {
+    throw Error("Invalid port number");
   }
   return port;
 }
@@ -48,7 +49,7 @@ async function handler(conn: NreplClient) {
       const res = await conn.read();
       _responses.push(res);
     }
-  } catch (err) {
+  } catch (_err) {
     if (!conn.isClosed) {
       conn.close();
     }
