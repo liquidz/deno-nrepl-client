@@ -17,11 +17,14 @@ export interface NreplDoneResponse extends NreplResponse {
   readonly context: Context;
 }
 
+export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
+
 export interface NreplClient {
   readonly conn: Deno.Conn;
   readonly bufReader: bufio.BufReader;
   readonly bufWriter: bufio.BufWriter;
   readonly isClosed: boolean;
+  readonly status: NreplStatus;
 
   close(): void;
   read(): Promise<NreplResponse>;

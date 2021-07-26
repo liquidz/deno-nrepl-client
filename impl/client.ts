@@ -4,6 +4,7 @@ import {
   NreplDoneResponse,
   NreplRequest,
   NreplResponse,
+  NreplStatus,
   RequestManager,
 } from "../types.ts";
 import { NreplDoneResponseImpl, NreplResponseImpl } from "./response.ts";
@@ -77,6 +78,7 @@ export class NreplClientImpl implements NreplClient {
   readonly bufReader: bufio.BufReader;
   readonly bufWriter: bufio.BufWriter;
 
+  #status: NreplStatus = "NotConnected";
   #closed: boolean;
   #reqManager: RequestManager;
 
@@ -93,14 +95,23 @@ export class NreplClientImpl implements NreplClient {
 
     this.#closed = false;
     this.#reqManager = {};
+    this.#status = "Waiting";
   }
 
   get isClosed(): boolean {
     return this.#closed;
   }
 
+  get status(): NreplStatus {
+    if (this.#status === "Waiting" && this.#reqManager !== {}) {
+      return "Evaluating";
+    }
+    return this.#status;
+  }
+
   close() {
     this.#closed = true;
+    this.#status = "NotConnected";
     this.conn.close();
   }
 
