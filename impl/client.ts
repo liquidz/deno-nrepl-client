@@ -55,12 +55,15 @@ export async function writeRequest(
     return Promise.reject(Deno.errors.InvalidData());
   }
 
+  // Assigning ID
   const id = message["id"] ?? crypto.randomUUID();
   if (typeof id !== "string") {
     throw Error("nrepl: id must be a string");
   }
+  message["id"] = id;
 
   if (reqManager == null) {
+    await bencode.write(bufWriter, message);
     return Promise.resolve(
       new NreplDoneResponseImpl({ responses: [], context: context || {} }),
     );
@@ -73,9 +76,7 @@ export async function writeRequest(
     responses: [],
   };
 
-  message["id"] = id;
   await bencode.write(bufWriter, message);
-
   return d;
 }
 
