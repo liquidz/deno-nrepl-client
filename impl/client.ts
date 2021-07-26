@@ -60,8 +60,14 @@ export async function writeRequest(
     throw Error("nrepl: id must be a string");
   }
 
+  if (reqManager == null) {
+    return Promise.resolve(
+      new NreplDoneResponseImpl({ responses: [], context: context || {} }),
+    );
+  }
+
   const d = async.deferred<NreplDoneResponse>();
-  (reqManager || {})[id] = {
+  reqManager[id] = {
     d: d,
     context: context || {},
     responses: [],
