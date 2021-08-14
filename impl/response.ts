@@ -43,6 +43,13 @@ export class NreplDoneResponseImpl implements NreplDoneResponse {
     this.context = context;
   }
 
+  get response(): bencode.BencodeObject {
+    if (this.responses.length > 0) {
+      throw Error("nrepl: No response");
+    }
+    return this.responses[0].response;
+  }
+
   id(): string | null {
     return this.responses[0].id();
   }

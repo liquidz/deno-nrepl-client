@@ -1,6 +1,7 @@
 import { async, bencode, bufio } from "./deps.ts";
 
 export interface NreplResponse {
+  readonly response: bencode.BencodeObject;
   context: Context;
   id(): string | null;
   getFirst(key: string): bencode.Bencode;
