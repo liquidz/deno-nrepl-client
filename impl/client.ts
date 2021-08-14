@@ -52,7 +52,7 @@ export async function writeRequest(
   reqManager?: RequestManager,
 ): Promise<NreplDoneResponse> {
   if (!bencode.isObject(message)) {
-    return Promise.reject(Deno.errors.InvalidData());
+    return Promise.reject(new Deno.errors.InvalidData());
   }
 
   // Assigning ID
