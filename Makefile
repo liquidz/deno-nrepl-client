@@ -19,7 +19,7 @@ lint:
 
 .PHONY: update
 # https://github.com/hayd/deno-udd
-# deno install -A -f -n udd https://deno.land/x/udd@0.4.0/main.ts
+# deno install -A -f -n udd https://deno.land/x/udd@0.5.0/main.ts
 update:
 	udd deps.ts
 
