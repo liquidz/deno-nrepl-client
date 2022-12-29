@@ -141,11 +141,15 @@ export class NreplClientImpl implements NreplClient {
     message: NreplMessage,
     option?: NreplWriteOption,
   ): Promise<NreplResponse> {
+    const doesWaitResponse = (option?.doesWaitResponse == null)
+      ? true
+      : option?.doesWaitResponse;
+
     return await writeRequest(
       this.bufWriter,
       message,
       option?.context,
-      this.#reqManager,
+      doesWaitResponse ? this.#reqManager : undefined,
     );
   }
 }

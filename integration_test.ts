@@ -100,9 +100,18 @@ Deno.test("Integration test", async () => {
       session: session,
     }, { context: { foo: "bar" } });
 
+    // TODO nbb nrepl-server only returns the last form result.
     //asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
     asserts.assertEquals(evalRes.get("value"), ["6"]);
     asserts.assertEquals(evalRes.context, { foo: "bar" });
+
+    const noWaitRes = await _conn.write({
+      op: "eval",
+      code: "1",
+      session: session,
+    }, { doesWaitResponse: false });
+    asserts.assertEquals(noWaitRes.responses, []);
+    asserts.assertEquals(noWaitRes.id(), null);
   } finally {
     await tearDown();
   }

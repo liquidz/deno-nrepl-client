@@ -31,7 +31,8 @@ export type NreplResponse = {
 export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
 
 export type NreplWriteOption = {
-  context: Context;
+  context?: Context;
+  doesWaitResponse?: boolean;
 };
 
 export type NreplClient = {
