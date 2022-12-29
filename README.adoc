@@ -1,6 +1,6 @@
 = deno-nrepl-client
 
-image:https://img.shields.io/badge/deno.land-deno__nrepl__client-blue?logo=deno["deno.land", link="https://deno.land/x/deno_nrepl_client"]
+image:https://img.shields.io/badge/deno.land-deno_nrepl_client-blue?logo=deno["deno.land", link="https://deno.land/x/deno_nrepl_client"]
 image:https://github.com/liquidz/deno-nrepl-client/actions/workflows/test.yml/badge.svg["GitHub Actions for test workflow", link="https://github.com/liquidz/deno-nrepl-client/actions/workflows/test.yml"]
 
 == Usage
