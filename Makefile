@@ -1,13 +1,3 @@
-.PHONY: nrepl
-nrepl:
-	cd test && clj -M:nrepl
-
-start_nrepl:
-	echo "FIXME"
-
-stop_nrepl:
-	echo "FIXME"
-
 .PHONY: test
 test:
 	deno test --coverage=./cov --unstable --allow-all
@@ -23,7 +13,7 @@ install-udd:
 
 .PHONY: outdated
 outdated:
-	udd deps.ts
+	udd deps.ts test/test_deps.ts
 
 .PHONY: test-install
 # https://github.com/kuuote/deno-cache-injector
