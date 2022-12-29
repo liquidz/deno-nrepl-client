@@ -20,6 +20,10 @@ export interface NreplDoneResponse extends NreplResponse {
 
 export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
 
+export type NreplWriteOption = {
+  context: Context;
+};
+
 export interface NreplClient {
   readonly conn: Deno.Conn;
   readonly bufReader: io.BufReader;
@@ -29,7 +33,10 @@ export interface NreplClient {
 
   close(): void;
   read(): Promise<NreplResponse>;
-  write(message: NreplRequest, context?: Context): Promise<NreplDoneResponse>;
+  write(
+    message: NreplRequest,
+    option?: NreplWriteOption,
+  ): Promise<NreplDoneResponse>;
 }
 
 type RequestBody = {

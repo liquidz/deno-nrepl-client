@@ -90,7 +90,7 @@ Deno.test("Integration test", async () => {
       op: "eval",
       code: `(do (println "hello") (+ 1 2 3)) (+ 4 5 6)`,
       session: session,
-    }, { foo: "bar" });
+    }, { context: { foo: "bar" } });
 
     //asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
     asserts.assertEquals(evalRes.getAll("value"), ["6"]);

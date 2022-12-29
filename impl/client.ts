@@ -5,11 +5,15 @@ import {
   NreplRequest,
   NreplResponse,
   NreplStatus,
+  NreplWriteOption,
   RequestManager,
 } from "../types.ts";
 import { NreplDoneResponseImpl, NreplResponseImpl } from "./response.ts";
 import { async, bencode, io } from "../deps.ts";
 
+/* --------------------
+ * readResponse
+ * -------------------- */
 export async function readResponse(
   bufReader: io.BufReader,
   reqManager?: RequestManager,
@@ -45,6 +49,9 @@ export async function readResponse(
   return res;
 }
 
+/* --------------------
+ * writeRequest
+ * -------------------- */
 export async function writeRequest(
   bufWriter: io.BufWriter,
   message: NreplRequest,
@@ -82,6 +89,9 @@ export async function writeRequest(
   return d;
 }
 
+/* --------------------
+ * NreplClientImpl
+ * -------------------- */
 export class NreplClientImpl implements NreplClient {
   readonly conn: Deno.Conn;
   readonly bufReader: io.BufReader;
@@ -133,12 +143,12 @@ export class NreplClientImpl implements NreplClient {
 
   async write(
     message: NreplRequest,
-    context?: Context,
+    option?: NreplWriteOption,
   ): Promise<NreplDoneResponse> {
     return await writeRequest(
       this.bufWriter,
       message,
-      context,
+      option?.context,
       this.#reqManager,
     );
   }
