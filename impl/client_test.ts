@@ -1,19 +1,22 @@
-import { async, bencode, bufio } from "../deps.ts";
-import { NreplDoneResponseImpl } from "./response.ts";
+import { async, bencode, io } from "../deps.ts";
+import { NreplResponseImpl } from "./response.ts";
 import { readResponse, writeRequest } from "./client.ts";
 import { asserts, readers, writers } from "../test/test_deps.ts";
-import { NreplDoneResponse, RequestManager } from "../types.ts";
+import { NreplResponse, RequestManager } from "../types.ts";
 
 function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
+/* --------------------
+ * writeRequest
+ * -------------------- */
+
 Deno.test("writeRequest", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
 
-  writeRequest(bufWriter, { op: "one", id: "123" });
-  await delay(10);
+  await writeRequest(bufWriter, { op: "one", id: "123" });
 
   asserts.assertEquals(
     { op: "one", id: "123" },
@@ -23,10 +26,9 @@ Deno.test("writeRequest", async () => {
 
 Deno.test("writeRequest: assign id automatically", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
 
-  writeRequest(bufWriter, { op: "two" });
-  await delay(10);
+  await writeRequest(bufWriter, { op: "two" });
 
   const m = await bencode.decode(strWriter.toString());
   asserts.assert(bencode.isObject(m));
@@ -36,8 +38,9 @@ Deno.test("writeRequest: assign id automatically", async () => {
 
 Deno.test("writeRequest: requestManager", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
+  const expectedRes = new NreplResponseImpl([], { dummy: "dummy" });
 
   asserts.assertEquals({}, reqManager);
 
@@ -47,24 +50,22 @@ Deno.test("writeRequest: requestManager", async () => {
     { foo: "bar" },
     reqManager,
   );
-  await delay(10);
 
-  const { context, d, responses } = reqManager["234"];
+  const { context, deferredResponse, responses } = reqManager["234"];
   asserts.assertEquals({ foo: "bar" }, context);
   asserts.assertEquals([], responses);
-
-  const expectedRes = new NreplDoneResponseImpl({
-    responses: [],
-    context: { dummy: "dummy" },
-  });
-  d.resolve(expectedRes);
+  deferredResponse.resolve(expectedRes);
 
   const actualRes = await p;
   asserts.assertEquals(expectedRes, actualRes);
 });
 
+/* --------------------
+ * readResponse
+ * -------------------- */
+
 Deno.test("readResponse", async () => {
-  const bufReader = new bufio.BufReader(
+  const bufReader = new io.BufReader(
     new readers.StringReader(
       bencode.encode({ op: "four" }),
     ),
@@ -73,22 +74,22 @@ Deno.test("readResponse", async () => {
   const res = await readResponse(bufReader);
 
   asserts.assertEquals({}, res.context);
-  asserts.assertEquals("four", res.getFirst("op"));
+  asserts.assertEquals(["four"], res.get("op"));
 });
 
 Deno.test("readResponse: requestManager", async () => {
-  const d = async.deferred<NreplDoneResponse>();
+  const d = async.deferred<NreplResponse>();
   const reqManager: RequestManager = {
     "567": {
       context: { foo: "bar" },
-      d: d,
+      deferredResponse: d,
       responses: [],
     },
   };
 
   let resStr = bencode.encode({ id: "456" });
   resStr += bencode.encode({ id: "567", status: ["done"] });
-  const bufReader = new bufio.BufReader(
+  const bufReader = new io.BufReader(
     new readers.StringReader(resStr),
   );
 
@@ -96,24 +97,24 @@ Deno.test("readResponse: requestManager", async () => {
   asserts.assertNotEquals({}, reqManager);
   const res1 = await readResponse(bufReader, reqManager);
   asserts.assertEquals({}, res1.context);
-  asserts.assertEquals("456", res1.getFirst("id"));
+  asserts.assertEquals(["456"], res1.get("id"));
 
   // Second response
   asserts.assertNotEquals({}, reqManager);
   const res2 = await readResponse(bufReader, reqManager);
   asserts.assertEquals({ foo: "bar" }, res2.context);
-  asserts.assertEquals("567", res2.getFirst("id"));
+  asserts.assertEquals(["567"], res2.get("id"));
   asserts.assertEquals({}, reqManager);
 
   // Done response
   const done = await d;
   asserts.assertEquals({ foo: "bar" }, done.context);
-  asserts.assertEquals("567", done.getFirst("id"));
+  asserts.assertEquals(["567"], done.get("id"));
 });
 
 Deno.test("writeRequest and readResponse", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
 
   const p = writeRequest(
@@ -130,7 +131,7 @@ Deno.test("writeRequest and readResponse", async () => {
   let resStr = bencode.encode({ id: m["id"], test: "one" });
   resStr += bencode.encode({ id: m["id"], test: "two", status: ["done"] });
 
-  const bufReader = new bufio.BufReader(
+  const bufReader = new io.BufReader(
     new readers.StringReader(resStr),
   );
 
@@ -138,22 +139,22 @@ Deno.test("writeRequest and readResponse", async () => {
   const res1 = await readResponse(bufReader, reqManager);
   asserts.assertEquals({ foo: "bar" }, res1.context);
   asserts.assertEquals("345", res1.id());
-  asserts.assertEquals("one", res1.getFirst("test"));
+  asserts.assertEquals(["one"], res1.get("test"));
   asserts.assertEquals(false, res1.isDone());
 
   // Second response
   const res2 = await readResponse(bufReader, reqManager);
   asserts.assertEquals({ foo: "bar" }, res2.context);
   asserts.assertEquals("345", res2.id());
-  asserts.assertEquals("two", res2.getFirst("test"));
-  asserts.assertEquals(["done"], res2.getFirst("status"));
+  asserts.assertEquals(["two"], res2.get("test"));
+  asserts.assertEquals([["done"]], res2.get("status"));
   asserts.assertEquals(true, res2.isDone());
 
   // Done response
   const done = await p;
   asserts.assertEquals({ foo: "bar" }, done.context);
   asserts.assertEquals("345", done.id());
-  asserts.assertEquals(["one", "two"], done.getAll("test"));
-  asserts.assertEquals(["done"], done.getFirst("status"));
+  asserts.assertEquals(["one", "two"], done.get("test"));
+  asserts.assertEquals([["done"]], done.get("status"));
   asserts.assertEquals(true, done.isDone());
 });

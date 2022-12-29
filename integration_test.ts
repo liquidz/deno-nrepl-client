@@ -57,7 +57,10 @@ async function handler(conn: NreplClient) {
 }
 
 async function setUp(): Promise<void> {
-  _process = Deno.run({ cmd: ["clojure", "-M:nrepl"], cwd: "./test" });
+  _process = Deno.run({
+    cmd: ["deno", "run", "-A", "npm:nbb", "nrepl-server"],
+    cwd: "./test",
+  });
   await untilPortFileReady();
   const port = await getTestPort();
 
@@ -72,6 +75,7 @@ async function tearDown(): Promise<void> {
   await delay(1000);
   _conn.close();
   _process.close();
+  await Deno.remove(portFilePath);
 }
 
 Deno.test("Integration test", async () => {
@@ -79,16 +83,17 @@ Deno.test("Integration test", async () => {
   try {
     const cloneRes = await _conn.write({ op: "clone" });
     asserts.assert(cloneRes.id() !== "");
-    const session = cloneRes.getFirst("new-session");
+    const session = cloneRes.getOne("new-session");
     asserts.assert(session !== "");
 
     const evalRes = await _conn.write({
       op: "eval",
       code: `(do (println "hello") (+ 1 2 3)) (+ 4 5 6)`,
       session: session,
-    }, { foo: "bar" });
+    }, { context: { foo: "bar" } });
 
-    asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
+    //asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
+    asserts.assertEquals(evalRes.get("value"), ["6"]);
     asserts.assertEquals(evalRes.context, { foo: "bar" });
   } finally {
     await tearDown();
