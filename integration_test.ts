@@ -83,7 +83,7 @@ Deno.test("Integration test", async () => {
   try {
     const cloneRes = await _conn.write({ op: "clone" });
     asserts.assert(cloneRes.id() !== "");
-    const session = cloneRes.get("new-session")[0];
+    const session = cloneRes.getOne("new-session");
     asserts.assert(session !== "");
 
     const evalRes = await _conn.write({

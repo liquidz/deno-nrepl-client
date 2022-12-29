@@ -14,6 +14,12 @@ Deno.test("Response get", () => {
   asserts.assertEquals(resp.get("id"), ["123"]);
 });
 
+Deno.test("Response getOne", () => {
+  const resp = new NreplResponseImpl([{ id: "123" }]);
+  asserts.assertEquals(resp.getOne("id"), "123");
+  asserts.assertEquals(resp.getOne("op"), null);
+});
+
 Deno.test("Response isDone", () => {
   const resp = new NreplResponseImpl([{ id: "123" }, { status: ["done"] }]);
   asserts.assertEquals(resp.isDone(), true);

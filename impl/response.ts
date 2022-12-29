@@ -11,15 +11,17 @@ export class NreplResponseImpl implements NreplResponse {
   }
 
   id(): string | null {
-    if (this.responses.length === 0) {
-      return null;
-    }
-    const id = this.responses[0]["id"];
+    const id = this.getOne("id");
     return (typeof id === "string") ? id : null;
   }
 
   get(key: string): bencode.Bencode[] {
     return this.responses.map((v) => v[key]).filter((v) => v != null);
+  }
+
+  getOne(key: string): bencode.Bencode {
+    const vals = this.get(key);
+    return (vals.length > 0) ? vals[0] : null;
   }
 
   isDone(): boolean {

@@ -8,6 +8,7 @@ export type NreplResponse = {
   context: Context;
   id(): string | null;
   get(key: string): bencode.Bencode[];
+  getOne(key: string): bencode.Bencode;
   isDone(): boolean;
 };
 
