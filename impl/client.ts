@@ -62,6 +62,7 @@ export async function writeRequest(
   }
   message["id"] = id;
 
+  // When you don't wait for responses
   if (reqManager == null) {
     await bencode.write(bufWriter, message);
     return Promise.resolve(
@@ -70,6 +71,7 @@ export async function writeRequest(
   }
 
   const d = async.deferred<NreplDoneResponse>();
+
   reqManager[id] = {
     deferredResponse: d,
     context: context || {},
@@ -110,7 +112,10 @@ export class NreplClientImpl implements NreplClient {
   }
 
   get status(): NreplStatus {
-    if (this.#status === "Waiting" && this.#reqManager !== {}) {
+    if (
+      this.#status === "Waiting" &&
+      Object.entries(this.#reqManager).length !== 0
+    ) {
       return "Evaluating";
     }
     return this.#status;

@@ -8,12 +8,15 @@ function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
+/* --------------------
+ * writeRequest
+ * -------------------- */
+
 Deno.test("writeRequest", async () => {
   const strWriter = new writers.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
 
-  writeRequest(bufWriter, { op: "one", id: "123" });
-  await delay(10);
+  await writeRequest(bufWriter, { op: "one", id: "123" });
 
   asserts.assertEquals(
     { op: "one", id: "123" },
@@ -25,8 +28,7 @@ Deno.test("writeRequest: assign id automatically", async () => {
   const strWriter = new writers.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
 
-  writeRequest(bufWriter, { op: "two" });
-  await delay(10);
+  await writeRequest(bufWriter, { op: "two" });
 
   const m = await bencode.decode(strWriter.toString());
   asserts.assert(bencode.isObject(m));
@@ -51,7 +53,6 @@ Deno.test("writeRequest: requestManager", async () => {
     { foo: "bar" },
     reqManager,
   );
-  await delay(10);
 
   const { context, deferredResponse, responses } = reqManager["234"];
   asserts.assertEquals({ foo: "bar" }, context);
@@ -61,6 +62,10 @@ Deno.test("writeRequest: requestManager", async () => {
   const actualRes = await p;
   asserts.assertEquals(expectedRes, actualRes);
 });
+
+/* --------------------
+ * readResponse
+ * -------------------- */
 
 Deno.test("readResponse", async () => {
   const bufReader = new io.BufReader(
