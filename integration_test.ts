@@ -1,5 +1,5 @@
 import * as nrepl from "./nrepl.ts";
-import { asserts, exists } from "./test/test_deps.ts";
+import { asserts } from "./test/test_deps.ts";
 import { NreplClient, NreplResponse } from "./types.ts";
 
 let _process: Deno.Process;
@@ -11,9 +11,17 @@ function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
+function doesFileExists(path: string): boolean {
+  try {
+    return Deno.lstatSync(path).isFile;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function untilPortFileReady() {
   while (true) {
-    if (await exists.exists(portFilePath)) {
+    if (doesFileExists(portFilePath)) {
       break;
     } else {
       await delay(1000);
@@ -92,9 +100,18 @@ Deno.test("Integration test", async () => {
       session: session,
     }, { context: { foo: "bar" } });
 
+    // TODO nbb nrepl-server only returns the last form result.
     //asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
     asserts.assertEquals(evalRes.get("value"), ["6"]);
     asserts.assertEquals(evalRes.context, { foo: "bar" });
+
+    const noWaitRes = await _conn.write({
+      op: "eval",
+      code: "1",
+      session: session,
+    }, { doesWaitResponse: false });
+    asserts.assertEquals(noWaitRes.responses, []);
+    asserts.assertEquals(noWaitRes.id(), null);
   } finally {
     await tearDown();
   }
