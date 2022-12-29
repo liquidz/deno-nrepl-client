@@ -1,5 +1,5 @@
 import * as nrepl from "./nrepl.ts";
-import { asserts, exists } from "./test/test_deps.ts";
+import { asserts } from "./test/test_deps.ts";
 import { NreplClient, NreplResponse } from "./types.ts";
 
 let _process: Deno.Process;
@@ -11,9 +11,17 @@ function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
 }
 
+function doesFileExists(path: string): boolean {
+  try {
+    return Deno.lstatSync(path).isFile;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function untilPortFileReady() {
   while (true) {
-    if (await exists.exists(portFilePath)) {
+    if (doesFileExists(portFilePath)) {
       break;
     } else {
       await delay(1000);

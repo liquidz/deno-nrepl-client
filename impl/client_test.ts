@@ -1,7 +1,7 @@
 import { async, bencode, io } from "../deps.ts";
 import { NreplResponseImpl } from "./response.ts";
 import { readResponse, writeRequest } from "./client.ts";
-import { asserts, readers, writers } from "../test/test_deps.ts";
+import { asserts } from "../test/test_deps.ts";
 import { NreplResponse, RequestManager } from "../types.ts";
 
 function delay(t: number) {
@@ -13,7 +13,7 @@ function delay(t: number) {
  * -------------------- */
 
 Deno.test("writeRequest", async () => {
-  const strWriter = new writers.StringWriter();
+  const strWriter = new io.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
 
   await writeRequest(bufWriter, { op: "one", id: "123" });
@@ -25,7 +25,7 @@ Deno.test("writeRequest", async () => {
 });
 
 Deno.test("writeRequest: assign id automatically", async () => {
-  const strWriter = new writers.StringWriter();
+  const strWriter = new io.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
 
   await writeRequest(bufWriter, { op: "two" });
@@ -37,7 +37,7 @@ Deno.test("writeRequest: assign id automatically", async () => {
 });
 
 Deno.test("writeRequest: requestManager", async () => {
-  const strWriter = new writers.StringWriter();
+  const strWriter = new io.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
   const expectedRes = new NreplResponseImpl([], { dummy: "dummy" });
@@ -66,7 +66,7 @@ Deno.test("writeRequest: requestManager", async () => {
 
 Deno.test("readResponse", async () => {
   const bufReader = new io.BufReader(
-    new readers.StringReader(
+    new io.StringReader(
       bencode.encode({ op: "four" }),
     ),
   );
@@ -90,7 +90,7 @@ Deno.test("readResponse: requestManager", async () => {
   let resStr = bencode.encode({ id: "456" });
   resStr += bencode.encode({ id: "567", status: ["done"] });
   const bufReader = new io.BufReader(
-    new readers.StringReader(resStr),
+    new io.StringReader(resStr),
   );
 
   // First response
@@ -113,7 +113,7 @@ Deno.test("readResponse: requestManager", async () => {
 });
 
 Deno.test("writeRequest and readResponse", async () => {
-  const strWriter = new writers.StringWriter();
+  const strWriter = new io.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
 
@@ -132,7 +132,7 @@ Deno.test("writeRequest and readResponse", async () => {
   resStr += bencode.encode({ id: m["id"], test: "two", status: ["done"] });
 
   const bufReader = new io.BufReader(
-    new readers.StringReader(resStr),
+    new io.StringReader(resStr),
   );
 
   // First response
