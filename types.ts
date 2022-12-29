@@ -1,4 +1,4 @@
-import { async, bencode, bufio } from "./deps.ts";
+import { async, bencode, io } from "./deps.ts";
 
 export interface NreplResponse {
   readonly response: bencode.BencodeObject;
@@ -22,8 +22,8 @@ export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
 
 export interface NreplClient {
   readonly conn: Deno.Conn;
-  readonly bufReader: bufio.BufReader;
-  readonly bufWriter: bufio.BufWriter;
+  readonly bufReader: io.BufReader;
+  readonly bufWriter: io.BufWriter;
   readonly isClosed: boolean;
   readonly status: NreplStatus;
 

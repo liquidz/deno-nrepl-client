@@ -1,4 +1,4 @@
-import { async, bencode, bufio } from "../deps.ts";
+import { async, bencode, io } from "../deps.ts";
 import { NreplDoneResponseImpl } from "./response.ts";
 import { readResponse, writeRequest } from "./client.ts";
 import { asserts, readers, writers } from "../test/test_deps.ts";
@@ -10,7 +10,7 @@ function delay(t: number) {
 
 Deno.test("writeRequest", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
 
   writeRequest(bufWriter, { op: "one", id: "123" });
   await delay(10);
@@ -23,7 +23,7 @@ Deno.test("writeRequest", async () => {
 
 Deno.test("writeRequest: assign id automatically", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
 
   writeRequest(bufWriter, { op: "two" });
   await delay(10);
@@ -36,7 +36,7 @@ Deno.test("writeRequest: assign id automatically", async () => {
 
 Deno.test("writeRequest: requestManager", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
 
   asserts.assertEquals({}, reqManager);
@@ -64,7 +64,7 @@ Deno.test("writeRequest: requestManager", async () => {
 });
 
 Deno.test("readResponse", async () => {
-  const bufReader = new bufio.BufReader(
+  const bufReader = new io.BufReader(
     new readers.StringReader(
       bencode.encode({ op: "four" }),
     ),
@@ -88,7 +88,7 @@ Deno.test("readResponse: requestManager", async () => {
 
   let resStr = bencode.encode({ id: "456" });
   resStr += bencode.encode({ id: "567", status: ["done"] });
-  const bufReader = new bufio.BufReader(
+  const bufReader = new io.BufReader(
     new readers.StringReader(resStr),
   );
 
@@ -113,7 +113,7 @@ Deno.test("readResponse: requestManager", async () => {
 
 Deno.test("writeRequest and readResponse", async () => {
   const strWriter = new writers.StringWriter();
-  const bufWriter = new bufio.BufWriter(strWriter);
+  const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
 
   const p = writeRequest(
@@ -130,7 +130,7 @@ Deno.test("writeRequest and readResponse", async () => {
   let resStr = bencode.encode({ id: m["id"], test: "one" });
   resStr += bencode.encode({ id: m["id"], test: "two", status: ["done"] });
 
-  const bufReader = new bufio.BufReader(
+  const bufReader = new io.BufReader(
     new readers.StringReader(resStr),
   );
 

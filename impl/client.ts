@@ -8,10 +8,10 @@ import {
   RequestManager,
 } from "../types.ts";
 import { NreplDoneResponseImpl, NreplResponseImpl } from "./response.ts";
-import { async, bencode, bufio } from "../deps.ts";
+import { async, bencode, io } from "../deps.ts";
 
 export async function readResponse(
-  bufReader: bufio.BufReader,
+  bufReader: io.BufReader,
   reqManager?: RequestManager,
 ): Promise<NreplResponse> {
   const originalRes = await bencode.read(bufReader);
@@ -46,7 +46,7 @@ export async function readResponse(
 }
 
 export async function writeRequest(
-  bufWriter: bufio.BufWriter,
+  bufWriter: io.BufWriter,
   message: NreplRequest,
   context?: Context,
   reqManager?: RequestManager,
@@ -82,8 +82,8 @@ export async function writeRequest(
 
 export class NreplClientImpl implements NreplClient {
   readonly conn: Deno.Conn;
-  readonly bufReader: bufio.BufReader;
-  readonly bufWriter: bufio.BufWriter;
+  readonly bufReader: io.BufReader;
+  readonly bufWriter: io.BufWriter;
 
   #status: NreplStatus = "NotConnected";
   #closed: boolean;
@@ -92,13 +92,13 @@ export class NreplClientImpl implements NreplClient {
   constructor(
     { conn, bufReader, bufWriter }: {
       conn: Deno.Conn;
-      bufReader?: bufio.BufReader;
-      bufWriter?: bufio.BufWriter;
+      bufReader?: io.BufReader;
+      bufWriter?: io.BufWriter;
     },
   ) {
     this.conn = conn;
-    this.bufReader = bufReader || new bufio.BufReader(this.conn);
-    this.bufWriter = bufWriter || new bufio.BufWriter(this.conn);
+    this.bufReader = bufReader || new io.BufReader(this.conn);
+    this.bufWriter = bufWriter || new io.BufWriter(this.conn);
 
     this.#closed = false;
     this.#reqManager = {};
