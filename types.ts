@@ -33,7 +33,7 @@ export interface NreplClient {
 }
 
 type RequestBody = {
-  d: async.Deferred<NreplDoneResponse>;
+  deferredResponse: async.Deferred<NreplDoneResponse>;
   responses: NreplResponse[];
   context: Context;
 };

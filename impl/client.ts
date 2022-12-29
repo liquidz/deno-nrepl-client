@@ -33,7 +33,7 @@ export async function readResponse(
   req.responses.push(res);
 
   if (res.isDone()) {
-    req.d.resolve(
+    req.deferredResponse.resolve(
       new NreplDoneResponseImpl({
         responses: req.responses,
         context: req.context,
@@ -71,7 +71,7 @@ export async function writeRequest(
 
   const d = async.deferred<NreplDoneResponse>();
   reqManager[id] = {
-    d: d,
+    deferredResponse: d,
     context: context || {},
     responses: [],
   };

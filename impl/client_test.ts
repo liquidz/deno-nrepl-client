@@ -38,6 +38,10 @@ Deno.test("writeRequest: requestManager", async () => {
   const strWriter = new writers.StringWriter();
   const bufWriter = new io.BufWriter(strWriter);
   const reqManager: RequestManager = {};
+  const expectedRes = new NreplDoneResponseImpl({
+    responses: [],
+    context: { dummy: "dummy" },
+  });
 
   asserts.assertEquals({}, reqManager);
 
@@ -49,15 +53,10 @@ Deno.test("writeRequest: requestManager", async () => {
   );
   await delay(10);
 
-  const { context, d, responses } = reqManager["234"];
+  const { context, deferredResponse, responses } = reqManager["234"];
   asserts.assertEquals({ foo: "bar" }, context);
   asserts.assertEquals([], responses);
-
-  const expectedRes = new NreplDoneResponseImpl({
-    responses: [],
-    context: { dummy: "dummy" },
-  });
-  d.resolve(expectedRes);
+  deferredResponse.resolve(expectedRes);
 
   const actualRes = await p;
   asserts.assertEquals(expectedRes, actualRes);
@@ -81,7 +80,7 @@ Deno.test("readResponse: requestManager", async () => {
   const reqManager: RequestManager = {
     "567": {
       context: { foo: "bar" },
-      d: d,
+      deferredResponse: d,
       responses: [],
     },
   };
