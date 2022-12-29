@@ -1,7 +1,7 @@
 import {
   Context,
   NreplClient,
-  NreplRequest,
+  NreplMessage,
   NreplResponse,
   NreplStatus,
   NreplWriteOption,
@@ -50,7 +50,7 @@ export async function readResponse(
  * -------------------- */
 export async function writeRequest(
   bufWriter: io.BufWriter,
-  message: NreplRequest,
+  message: NreplMessage,
   context?: Context,
   reqManager?: RequestManager,
 ): Promise<NreplResponse> {
@@ -138,7 +138,7 @@ export class NreplClientImpl implements NreplClient {
   }
 
   async write(
-    message: NreplRequest,
+    message: NreplMessage,
     option?: NreplWriteOption,
   ): Promise<NreplResponse> {
     return await writeRequest(

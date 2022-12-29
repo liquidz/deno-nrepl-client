@@ -1,16 +1,15 @@
 import { async, bencode, io } from "./deps.ts";
 
 export type Context = Record<string, string>;
+export type NreplMessage = bencode.BencodeObject;
 
 export type NreplResponse = {
-  readonly responses: bencode.BencodeObject[];
+  readonly responses: NreplMessage[];
   context: Context;
   id(): string | null;
   get(key: string): bencode.Bencode[];
   isDone(): boolean;
 };
-
-export type NreplRequest = bencode.BencodeObject;
 
 export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
 
@@ -28,14 +27,14 @@ export interface NreplClient {
   close(): void;
   read(): Promise<NreplResponse>;
   write(
-    message: NreplRequest,
+    message: NreplMessage,
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
 }
 
 type RequestBody = {
   deferredResponse: async.Deferred<NreplResponse>;
-  responses: bencode.BencodeObject[];
+  responses: NreplMessage[];
   context: Context;
 };
 
