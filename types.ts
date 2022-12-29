@@ -18,7 +18,7 @@ export type NreplWriteOption = {
   context: Context;
 };
 
-export interface NreplClient {
+export type NreplClient = {
   readonly conn: Deno.Conn;
   readonly bufReader: io.BufReader;
   readonly bufWriter: io.BufWriter;
@@ -31,7 +31,7 @@ export interface NreplClient {
     message: NreplMessage,
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
-}
+};
 
 type RequestBody = {
   deferredResponse: async.Deferred<NreplResponse>;
