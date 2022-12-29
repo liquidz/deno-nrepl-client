@@ -1,22 +1,16 @@
 import { async, bencode, io } from "./deps.ts";
 
-export interface NreplResponse {
-  readonly response: bencode.BencodeObject;
-  context: Context;
-  id(): string | null;
-  getFirst(key: string): bencode.Bencode;
-  getAll(key: string): bencode.Bencode[];
-  isDone(): boolean;
-}
-
-export type NreplRequest = bencode.BencodeObject;
-
 export type Context = Record<string, string>;
 
-export interface NreplDoneResponse extends NreplResponse {
-  readonly responses: NreplResponse[];
-  readonly context: Context;
-}
+export type NreplResponse = {
+  readonly responses: bencode.BencodeObject[];
+  context: Context;
+  id(): string | null;
+  get(key: string): bencode.Bencode[];
+  isDone(): boolean;
+};
+
+export type NreplRequest = bencode.BencodeObject;
 
 export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
 
@@ -36,12 +30,12 @@ export interface NreplClient {
   write(
     message: NreplRequest,
     option?: NreplWriteOption,
-  ): Promise<NreplDoneResponse>;
+  ): Promise<NreplResponse>;
 }
 
 type RequestBody = {
-  deferredResponse: async.Deferred<NreplDoneResponse>;
-  responses: NreplResponse[];
+  deferredResponse: async.Deferred<NreplResponse>;
+  responses: bencode.BencodeObject[];
   context: Context;
 };
 

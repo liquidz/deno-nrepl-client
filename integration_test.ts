@@ -83,7 +83,7 @@ Deno.test("Integration test", async () => {
   try {
     const cloneRes = await _conn.write({ op: "clone" });
     asserts.assert(cloneRes.id() !== "");
-    const session = cloneRes.getFirst("new-session");
+    const session = cloneRes.get("new-session")[0];
     asserts.assert(session !== "");
 
     const evalRes = await _conn.write({
@@ -93,7 +93,7 @@ Deno.test("Integration test", async () => {
     }, { context: { foo: "bar" } });
 
     //asserts.assertEquals(evalRes.getAll("value"), ["6", "15"]);
-    asserts.assertEquals(evalRes.getAll("value"), ["6"]);
+    asserts.assertEquals(evalRes.get("value"), ["6"]);
     asserts.assertEquals(evalRes.context, { foo: "bar" });
   } finally {
     await tearDown();

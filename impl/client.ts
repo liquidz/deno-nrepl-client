@@ -1,14 +1,13 @@
 import {
   Context,
   NreplClient,
-  NreplDoneResponse,
   NreplRequest,
   NreplResponse,
   NreplStatus,
   NreplWriteOption,
   RequestManager,
 } from "../types.ts";
-import { NreplDoneResponseImpl, NreplResponseImpl } from "./response.ts";
+import { NreplResponseImpl } from "./response.ts";
 import { async, bencode, io } from "../deps.ts";
 
 /* --------------------
@@ -25,23 +24,20 @@ export async function readResponse(
 
   const id = originalRes["id"];
   if (id == null || typeof id !== "string") {
-    return new NreplResponseImpl(originalRes);
+    return new NreplResponseImpl([originalRes]);
   }
 
-  const req = (reqManager || {})[id];
-  if (req == null) {
-    return new NreplResponseImpl(originalRes);
+  const reqBody = (reqManager || {})[id];
+  if (reqBody == null) {
+    return new NreplResponseImpl([originalRes]);
   }
 
-  const res = new NreplResponseImpl(originalRes, req.context);
-  req.responses.push(res);
+  const res = new NreplResponseImpl([originalRes], reqBody.context);
+  reqBody.responses.push(originalRes);
 
   if (res.isDone()) {
-    req.deferredResponse.resolve(
-      new NreplDoneResponseImpl({
-        responses: req.responses,
-        context: req.context,
-      }),
+    reqBody.deferredResponse.resolve(
+      new NreplResponseImpl(reqBody.responses, reqBody.context),
     );
     delete (reqManager || {})[id];
   }
@@ -57,7 +53,7 @@ export async function writeRequest(
   message: NreplRequest,
   context?: Context,
   reqManager?: RequestManager,
-): Promise<NreplDoneResponse> {
+): Promise<NreplResponse> {
   if (!bencode.isObject(message)) {
     return Promise.reject(new Deno.errors.InvalidData());
   }
@@ -73,11 +69,11 @@ export async function writeRequest(
   if (reqManager == null) {
     await bencode.write(bufWriter, message);
     return Promise.resolve(
-      new NreplDoneResponseImpl({ responses: [], context: context || {} }),
+      new NreplResponseImpl([], context || {}),
     );
   }
 
-  const d = async.deferred<NreplDoneResponse>();
+  const d = async.deferred<NreplResponse>();
 
   reqManager[id] = {
     deferredResponse: d,
@@ -144,7 +140,7 @@ export class NreplClientImpl implements NreplClient {
   async write(
     message: NreplRequest,
     option?: NreplWriteOption,
-  ): Promise<NreplDoneResponse> {
+  ): Promise<NreplResponse> {
     return await writeRequest(
       this.bufWriter,
       message,
