@@ -1,6 +1,9 @@
 import { NreplClientImpl } from "./impl/client.ts";
 import { NreplClient } from "./types.ts";
 
+/**
+ * Connect to a nREPL server.
+ */
 export async function connect(
   { hostname, port }: { hostname?: string; port: number },
 ): Promise<NreplClient> {

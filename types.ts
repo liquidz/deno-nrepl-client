@@ -1,6 +1,22 @@
 import { async, bencode, io } from "./deps.ts";
 
+/**
+ * An arbitrary context record that can be specified on each requests.
+ * This context record will be returned on NreplResponse.
+ */
 export type Context = Record<string, string>;
+
+type RequestBody = {
+  deferredResponse: async.Deferred<NreplResponse>;
+  responses: NreplMessage[];
+  context: Context;
+};
+
+/**
+ * A Record to manage requests for which DONE status has not been returned
+ */
+export type RequestManager = Record<string, RequestBody>;
+
 export type NreplMessage = bencode.BencodeObject;
 
 export type NreplResponse = {
@@ -32,11 +48,3 @@ export type NreplClient = {
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
 };
-
-type RequestBody = {
-  deferredResponse: async.Deferred<NreplResponse>;
-  responses: NreplMessage[];
-  context: Context;
-};
-
-export type RequestManager = Record<string, RequestBody>;
