@@ -1,4 +1,4 @@
-import { asserts } from "../test/test_deps.ts";
+import { asserts } from "../test_deps.ts";
 import { NreplResponseImpl } from "./response.ts";
 
 Deno.test("Response id", () => {
