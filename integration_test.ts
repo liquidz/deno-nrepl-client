@@ -1,11 +1,11 @@
 import * as nrepl from "./nrepl.ts";
-import { asserts } from "./test/test_deps.ts";
+import { asserts } from "./test_deps.ts";
 import { NreplClient, NreplResponse } from "./types.ts";
 
 let _process: Deno.Process;
 let _conn: NreplClient;
 let _responses: NreplResponse[] = [];
-const portFilePath = "./test/.nrepl-port";
+const portFilePath = "./.nrepl-port";
 
 function delay(t: number) {
   return new Promise((resolve) => setTimeout(resolve, t));
@@ -67,7 +67,6 @@ async function handler(conn: NreplClient) {
 async function setUp(): Promise<void> {
   _process = Deno.run({
     cmd: ["deno", "run", "-A", "npm:nbb", "nrepl-server"],
-    cwd: "./test",
   });
   await untilPortFileReady();
   const port = await getTestPort();

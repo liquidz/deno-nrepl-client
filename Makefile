@@ -13,7 +13,7 @@ install-udd:
 
 .PHONY: outdated
 outdated:
-	udd deps.ts test/test_deps.ts
+	udd deps.ts test_deps.ts mock.ts
 
 .PHONY: test-install
 # https://github.com/kuuote/deno-cache-injector
