@@ -1,7 +1,6 @@
 import {
   NreplClient,
   NreplMessage,
-  NreplResponse,
   NreplStatus,
   NreplWriteOption,
 } from "./types.ts";
@@ -28,7 +27,6 @@ export class NreplClientMock implements NreplClient {
   #status: NreplStatus;
   #closed: boolean;
   #relay: RelayFunction;
-  #readInterval: number;
 
   constructor(relay: RelayFunction, option?: Option) {
     this.conn = createMockConn();
@@ -37,7 +35,7 @@ export class NreplClientMock implements NreplClient {
 
     this.#relay = relay;
     this.#status = option?.status || "Waiting";
-    this.#readInterval = option?.readInterval || 1000;
+    //this.#readInterval = option?.readInterval || 1000;
     this.#closed = false;
   }
 
@@ -53,11 +51,7 @@ export class NreplClientMock implements NreplClient {
   }
 
   read() {
-    return new Promise<NreplResponse>((resolve) => {
-      setTimeout((_) => {
-        resolve(new NreplResponseImpl([]));
-      }, this.#readInterval);
-    });
+    return Promise.resolve(new NreplResponseImpl([]));
   }
 
   write(message: NreplMessage, option?: NreplWriteOption) {
