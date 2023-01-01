@@ -1,5 +1,5 @@
 import * as sut from "./mock.ts";
-import { NreplMessage, NreplWriteOption } from "./types.ts";
+import { NreplMessage } from "./types.ts";
 import { asserts } from "./test_deps.ts";
 
 Deno.test("write", async () => {
