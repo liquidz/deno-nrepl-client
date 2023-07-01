@@ -33,10 +33,19 @@ export type NreplWriteOption = {
   doesWaitResponse?: boolean;
 };
 
+export type NreplOutputType = "out" | "err" | "pprint-out";
+
+export type NreplOutput = {
+  readonly type: NreplOutputType;
+  readonly text: string;
+};
+
 export type NreplClient = {
   readonly conn: Deno.Conn;
   readonly readable: ReadableStream<bencode.Bencode>;
   readonly writable: WritableStream<Uint8Array>;
+  readonly output: ReadableStream<NreplOutput>;
+
   readonly isClosed: boolean;
   readonly status: NreplStatus;
 
