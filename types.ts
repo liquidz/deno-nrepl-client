@@ -8,7 +8,7 @@ export type Context = Record<string, string>;
 
 type RequestBody = {
   deferredResponse: async.Deferred<NreplResponse>;
-  responses: NreplMessage[];
+  responses: bencode.BencodeObject[];
   context: Context;
 };
 
@@ -17,10 +17,8 @@ type RequestBody = {
  */
 export type RequestManager = Record<string, RequestBody>;
 
-export type NreplMessage = bencode.BencodeObject;
-
 export type NreplResponse = {
-  readonly responses: NreplMessage[];
+  readonly responses: bencode.BencodeObject[];
   context: Context;
   id(): string | null;
   get(key: string): bencode.Bencode[];
@@ -45,7 +43,7 @@ export type NreplClient = {
   close(): void;
   read(): Promise<NreplResponse>;
   write(
-    message: NreplMessage,
+    message: bencode.BencodeObject,
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
 };
