@@ -55,4 +55,6 @@ export type NreplClient = {
     message: bencode.BencodeObject,
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
+
+  start(): Promise<void>;
 };
