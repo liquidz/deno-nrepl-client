@@ -1,4 +1,4 @@
-import { async, bencode, io } from "./deps.ts";
+import { async, bencode } from "./deps.ts";
 
 /**
  * An arbitrary context record that can be specified on each requests.
@@ -35,8 +35,8 @@ export type NreplWriteOption = {
 
 export type NreplClient = {
   readonly conn: Deno.Conn;
-  readonly bufReader: io.BufReader;
-  readonly bufWriter: io.BufWriter;
+  readonly readable: ReadableStream<bencode.Bencode>;
+  readonly writable: WritableStream<Uint8Array>;
   readonly isClosed: boolean;
   readonly status: NreplStatus;
 
