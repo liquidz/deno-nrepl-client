@@ -49,12 +49,12 @@ export type NreplClient = {
   readonly isClosed: boolean;
   readonly status: NreplStatus;
 
-  close(): void;
+  close(): Promise<void>;
   read(): Promise<NreplResponse>;
   write(
     message: bencode.BencodeObject,
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
 
-  start(): Promise<void>;
+  start(): boolean;
 };

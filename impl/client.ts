@@ -12,7 +12,6 @@ import { BencodeObjectToNreplOutputStream } from "./stream.ts";
 import { async, bencode } from "../deps.ts";
 
 const textEncoder = new TextEncoder();
-const closedMessage = "nREPL connection is closed" as const;
 
 /* --------------------
  * readResponse
@@ -118,7 +117,9 @@ export class NreplClientImpl implements NreplClient {
   #status: NreplStatus = "NotConnected";
   #closed: boolean;
   #reqManager: RequestManager;
-  #closingSignal: async.Deferred<never>;
+
+  #closingSignal: async.Deferred<boolean>;
+  #startingPromise: Promise<void> | undefined;
 
   constructor({
     conn,
@@ -160,11 +161,15 @@ export class NreplClientImpl implements NreplClient {
     return this.#status;
   }
 
-  close() {
+  async close(): Promise<void> {
     this.#closed = true;
     this.#status = "NotConnected";
     this.conn.close();
-    this.#closingSignal.reject(closedMessage);
+    this.#closingSignal.resolve();
+
+    if (this.#startingPromise != null) {
+      await this.#startingPromise;
+    }
   }
 
   async read(): Promise<NreplResponse> {
@@ -187,20 +192,26 @@ export class NreplClientImpl implements NreplClient {
     );
   }
 
-  async start(): Promise<void> {
+  async #start(): Promise<void> {
     try {
       while (!this.isClosed) {
         await Promise.race([this.read(), this.#closingSignal]);
       }
     } catch (e) {
       if (!this.isClosed) {
-        this.close();
+        await this.close();
       }
-      if (e !== closedMessage) {
-        return Promise.reject(e);
-      }
+      return Promise.reject(e);
     }
 
     return;
+  }
+
+  start(): boolean {
+    if (this.#startingPromise != null) {
+      return false;
+    }
+    this.#startingPromise = this.#start();
+    return true;
   }
 }
