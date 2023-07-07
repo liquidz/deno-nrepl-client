@@ -1,9 +1,9 @@
+import { bencode } from "./deps.ts";
 import * as sut from "./mock.ts";
-import { NreplMessage } from "./types.ts";
 import { asserts } from "./test_deps.ts";
 
 Deno.test("write", async () => {
-  const relay = (msg: NreplMessage): NreplMessage => {
+  const relay = (msg: bencode.BencodeObject): bencode.BencodeObject => {
     if (msg["op"] === "eval") {
       return { value: "dummy", status: ["done"] };
     } else {
@@ -32,17 +32,20 @@ Deno.test("write", async () => {
 });
 
 Deno.test("describe", async () => {
-  const client = new sut.NreplClientMock((_: NreplMessage): NreplMessage => {
-    return {};
-  });
-  asserts.assertEquals(
-    (await client.write({ op: "describe" })).getOne("ops"),
-    { clone: 1, close: 1, eval: 1 },
+  const client = new sut.NreplClientMock(
+    (_: bencode.BencodeObject): bencode.BencodeObject => {
+      return {};
+    },
   );
+  asserts.assertEquals((await client.write({ op: "describe" })).getOne("ops"), {
+    clone: 1,
+    close: 1,
+    eval: 1,
+  });
 
   const describeClient = new sut.NreplClientMock(
-    (msg: NreplMessage): NreplMessage => {
-      return (msg["op"] === "describe") ? { ops: { clone: 1 } } : {};
+    (msg: bencode.BencodeObject): bencode.BencodeObject => {
+      return msg["op"] === "describe" ? { ops: { clone: 1 } } : {};
     },
   );
   asserts.assertEquals(
@@ -52,19 +55,33 @@ Deno.test("describe", async () => {
 });
 
 Deno.test("clone", async () => {
-  const client = new sut.NreplClientMock((_: NreplMessage): NreplMessage => {
-    return {};
-  });
+  const client = new sut.NreplClientMock(
+    (_: bencode.BencodeObject): bencode.BencodeObject => {
+      return {};
+    },
+  );
   const resp = await client.write({ op: "clone" });
   asserts.assertNotEquals(resp.getOne("new-session"), undefined);
 
   const cloneClient = new sut.NreplClientMock(
-    (msg: NreplMessage): NreplMessage => {
-      return (msg["op"] === "clone") ? { "new-session": "dummySession" } : {};
+    (msg: bencode.BencodeObject): bencode.BencodeObject => {
+      return msg["op"] === "clone" ? { "new-session": "dummySession" } : {};
     },
   );
   asserts.assertEquals(
     (await cloneClient.write({ op: "clone" })).getOne("new-session"),
     "dummySession",
   );
+});
+
+Deno.test("close", async () => {
+  const client = new sut.NreplClientMock(
+    (_: bencode.BencodeObject): bencode.BencodeObject => {
+      return {};
+    },
+  );
+
+  asserts.assertEquals(client.isClosed, false);
+  await client.close();
+  asserts.assertEquals(client.isClosed, true);
 });

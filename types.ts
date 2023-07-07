@@ -1,4 +1,4 @@
-import { async, bencode, io } from "./deps.ts";
+import { async, bencode } from "./deps.ts";
 
 /**
  * An arbitrary context record that can be specified on each requests.
@@ -8,7 +8,7 @@ export type Context = Record<string, string>;
 
 type RequestBody = {
   deferredResponse: async.Deferred<NreplResponse>;
-  responses: NreplMessage[];
+  responses: bencode.BencodeObject[];
   context: Context;
 };
 
@@ -17,10 +17,8 @@ type RequestBody = {
  */
 export type RequestManager = Record<string, RequestBody>;
 
-export type NreplMessage = bencode.BencodeObject;
-
 export type NreplResponse = {
-  readonly responses: NreplMessage[];
+  readonly responses: bencode.BencodeObject[];
   context: Context;
   id(): string | null;
   get(key: string): bencode.Bencode[];
@@ -35,17 +33,29 @@ export type NreplWriteOption = {
   doesWaitResponse?: boolean;
 };
 
+export type NreplOutputType = "out" | "err" | "pprint-out";
+
+export type NreplOutput = {
+  readonly type: NreplOutputType;
+  readonly text: string;
+};
+
 export type NreplClient = {
   readonly conn: Deno.Conn;
-  readonly bufReader: io.BufReader;
-  readonly bufWriter: io.BufWriter;
+  readonly readable: ReadableStream<bencode.Bencode>;
+  readonly writable: WritableStream<Uint8Array>;
+  readonly output: ReadableStream<NreplOutput>;
+
+  readonly closed: Promise<void>;
   readonly isClosed: boolean;
   readonly status: NreplStatus;
 
-  close(): void;
+  close(): Promise<void>;
   read(): Promise<NreplResponse>;
   write(
-    message: NreplMessage,
+    message: bencode.BencodeObject,
     option?: NreplWriteOption,
   ): Promise<NreplResponse>;
+
+  start(): boolean;
 };

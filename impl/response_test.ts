@@ -24,8 +24,11 @@ Deno.test("Response isDone", () => {
   const resp = new NreplResponseImpl([{ id: "123" }, { status: ["done"] }]);
   asserts.assertEquals(resp.isDone(), true);
 
-  const errorResp = new NreplResponseImpl([{ id: "123" }, {
-    status: ["error"],
-  }]);
+  const errorResp = new NreplResponseImpl([
+    { id: "123" },
+    {
+      status: ["error"],
+    },
+  ]);
   asserts.assertEquals(errorResp.isDone(), false);
 });

@@ -1,56 +1,78 @@
 import {
   Context,
   NreplClient,
-  NreplMessage,
+  NreplOutput,
   NreplResponse,
   NreplStatus,
   NreplWriteOption,
   RequestManager,
 } from "../types.ts";
 import { NreplResponseImpl } from "./response.ts";
-import { async, bencode, io } from "../deps.ts";
+import { BencodeObjectToNreplOutputStream } from "./stream.ts";
+import { async, bencode } from "../deps.ts";
+
+const textEncoder = new TextEncoder();
 
 /* --------------------
  * readResponse
  * -------------------- */
-export async function readResponse(
-  bufReader: io.BufReader,
+async function readResponse(
+  readableStream: ReadableStream<bencode.Bencode>,
   reqManager?: RequestManager,
 ): Promise<NreplResponse> {
-  const originalRes = await bencode.read(bufReader);
-  if (!bencode.isObject(originalRes)) {
-    return Promise.reject(new Deno.errors.InvalidData());
+  const reader = readableStream.getReader();
+  try {
+    const { done, value } = await reader.read();
+    if (done) {
+      return Promise.reject(new Deno.errors.InvalidData());
+    }
+    if (!bencode.isObject(value)) {
+      return Promise.reject(new Deno.errors.InvalidData());
+    }
+
+    const id = value["id"];
+    if (id == null || typeof id !== "string") {
+      return new NreplResponseImpl([value]);
+    }
+
+    const reqBody = (reqManager || {})[id];
+    if (reqBody == null) {
+      return new NreplResponseImpl([value]);
+    }
+
+    const res = new NreplResponseImpl([value], reqBody.context);
+    reqBody.responses.push(value);
+
+    if (res.isDone()) {
+      reqBody.deferredResponse.resolve(
+        new NreplResponseImpl(reqBody.responses, reqBody.context),
+      );
+      delete (reqManager || {})[id];
+    }
+
+    return res;
+  } finally {
+    reader.releaseLock();
   }
-
-  const id = originalRes["id"];
-  if (id == null || typeof id !== "string") {
-    return new NreplResponseImpl([originalRes]);
-  }
-
-  const reqBody = (reqManager || {})[id];
-  if (reqBody == null) {
-    return new NreplResponseImpl([originalRes]);
-  }
-
-  const res = new NreplResponseImpl([originalRes], reqBody.context);
-  reqBody.responses.push(originalRes);
-
-  if (res.isDone()) {
-    reqBody.deferredResponse.resolve(
-      new NreplResponseImpl(reqBody.responses, reqBody.context),
-    );
-    delete (reqManager || {})[id];
-  }
-
-  return res;
 }
 
 /* --------------------
  * writeRequest
  * -------------------- */
-export async function writeRequest(
-  bufWriter: io.BufWriter,
-  message: NreplMessage,
+
+async function writeMessage(
+  writableStream: WritableStream<Uint8Array>,
+  message: bencode.BencodeObject,
+) {
+  const writer = writableStream.getWriter();
+  await writer.ready;
+  await writer.write(textEncoder.encode(bencode.encode(message)));
+  writer.releaseLock();
+}
+
+async function writeRequest(
+  writableStream: WritableStream<Uint8Array>,
+  message: bencode.BencodeObject,
   context?: Context,
   reqManager?: RequestManager,
 ): Promise<NreplResponse> {
@@ -67,10 +89,8 @@ export async function writeRequest(
 
   // When you don't wait for responses
   if (reqManager == null) {
-    await bencode.write(bufWriter, message);
-    return Promise.resolve(
-      new NreplResponseImpl([], context || {}),
-    );
+    await writeMessage(writableStream, message);
+    return Promise.resolve(new NreplResponseImpl([], context || {}));
   }
 
   const d = async.deferred<NreplResponse>();
@@ -81,7 +101,7 @@ export async function writeRequest(
     responses: [],
   };
 
-  await bencode.write(bufWriter, message);
+  await writeMessage(writableStream, message);
   return d;
 }
 
@@ -90,27 +110,47 @@ export async function writeRequest(
  * -------------------- */
 export class NreplClientImpl implements NreplClient {
   readonly conn: Deno.Conn;
-  readonly bufReader: io.BufReader;
-  readonly bufWriter: io.BufWriter;
+  readonly readable: ReadableStream<bencode.Bencode>;
+  readonly writable: WritableStream<Uint8Array>;
+  readonly output: ReadableStream<NreplOutput>;
 
   #status: NreplStatus = "NotConnected";
   #closed: boolean;
   #reqManager: RequestManager;
 
-  constructor(
-    { conn, bufReader, bufWriter }: {
-      conn: Deno.Conn;
-      bufReader?: io.BufReader;
-      bufWriter?: io.BufWriter;
-    },
-  ) {
+  #closingSignal: async.Deferred<boolean>;
+  #startingPromise: Promise<void> | undefined;
+
+  constructor({
+    conn,
+    readable,
+    writable,
+  }: {
+    conn: Deno.Conn;
+    readable?: ReadableStream<Uint8Array>;
+    writable?: WritableStream<Uint8Array>;
+  }) {
     this.conn = conn;
-    this.bufReader = bufReader || new io.BufReader(this.conn);
-    this.bufWriter = bufWriter || new io.BufWriter(this.conn);
+    const [bencodeStream1, bencodeStream2] = (readable ?? this.conn.readable)
+      .pipeThrough(new bencode.Uint8ArrayToBencodeStream())
+      .tee();
+
+    this.readable = bencodeStream1;
+    this.output = bencodeStream2.pipeThrough(
+      new BencodeObjectToNreplOutputStream(),
+    );
+    this.writable = writable ?? this.conn.writable;
 
     this.#closed = false;
     this.#reqManager = {};
     this.#status = "Waiting";
+    this.#closingSignal = async.deferred();
+  }
+
+  get closed(): Promise<void> {
+    return this.#startingPromise == null
+      ? Promise.resolve()
+      : this.#startingPromise;
   }
 
   get isClosed(): boolean {
@@ -127,29 +167,57 @@ export class NreplClientImpl implements NreplClient {
     return this.#status;
   }
 
-  close() {
+  async close(): Promise<void> {
     this.#closed = true;
     this.#status = "NotConnected";
     this.conn.close();
+    this.#closingSignal.resolve();
+
+    if (this.#startingPromise != null) {
+      await this.#startingPromise;
+    }
   }
 
   async read(): Promise<NreplResponse> {
-    return await readResponse(this.bufReader, this.#reqManager);
+    return await readResponse(this.readable, this.#reqManager);
   }
 
   async write(
-    message: NreplMessage,
+    message: bencode.BencodeObject,
     option?: NreplWriteOption,
   ): Promise<NreplResponse> {
-    const doesWaitResponse = (option?.doesWaitResponse == null)
+    const doesWaitResponse = option?.doesWaitResponse == null
       ? true
       : option?.doesWaitResponse;
 
     return await writeRequest(
-      this.bufWriter,
+      this.writable,
       message,
       option?.context,
       doesWaitResponse ? this.#reqManager : undefined,
     );
+  }
+
+  async #start(): Promise<void> {
+    try {
+      while (!this.isClosed) {
+        await Promise.race([this.read(), this.#closingSignal]);
+      }
+    } catch (e) {
+      if (!this.isClosed) {
+        await this.close();
+      }
+      return Promise.reject(e);
+    }
+
+    return;
+  }
+
+  start(): boolean {
+    if (this.#startingPromise != null) {
+      return false;
+    }
+    this.#startingPromise = this.#start();
+    return true;
   }
 }

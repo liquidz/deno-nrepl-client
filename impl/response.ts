@@ -12,7 +12,7 @@ export class NreplResponseImpl implements NreplResponse {
 
   id(): string | null {
     const id = this.getOne("id");
-    return (typeof id === "string") ? id : null;
+    return typeof id === "string" ? id : null;
   }
 
   get(key: string): bencode.Bencode[] {
@@ -21,7 +21,7 @@ export class NreplResponseImpl implements NreplResponse {
 
   getOne(key: string): bencode.Bencode {
     const vals = this.get(key);
-    return (vals.length > 0) ? vals[0] : null;
+    return vals.length > 0 ? vals[0] : null;
   }
 
   isDone(): boolean {
