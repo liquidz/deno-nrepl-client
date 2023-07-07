@@ -15,5 +15,8 @@ export async function connect({
     hostname: hostname || "127.0.0.1",
     port: port,
   });
-  return new NreplClientImpl({ conn });
+  const client = new NreplClientImpl({ conn });
+  client.start();
+
+  return client;
 }
