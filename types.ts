@@ -46,6 +46,7 @@ export type NreplClient = {
   readonly writable: WritableStream<Uint8Array>;
   readonly output: ReadableStream<NreplOutput>;
 
+  readonly closed: Promise<void>;
   readonly isClosed: boolean;
   readonly status: NreplStatus;
 

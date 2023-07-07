@@ -147,6 +147,12 @@ export class NreplClientImpl implements NreplClient {
     this.#closingSignal = async.deferred();
   }
 
+  get closed(): Promise<void> {
+    return this.#startingPromise == null
+      ? Promise.resolve()
+      : this.#startingPromise;
+  }
+
   get isClosed(): boolean {
     return this.#closed;
   }
