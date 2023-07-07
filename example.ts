@@ -2,7 +2,6 @@ import * as nrepl from "./mod.ts";
 
 // Run `deno task example-nrepl-server` before running this example.
 const conn = await nrepl.connect({ port: 12345 });
-const closed = conn.start();
 
 // Write a request and read a response
 const resp = await conn.write({
@@ -18,8 +17,7 @@ Promise.race([
       console.log(`${o.type} => ${o.text}`);
     }
   })(),
-  closed,
+  conn.closed,
 ]);
 
-conn.close();
-await closed;
+await conn.close();

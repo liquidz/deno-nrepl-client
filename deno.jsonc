@@ -7,7 +7,7 @@
     "check": "deno task lint && deno task format-check && deno check --unstable $(find . -name '*.ts')",
     "test-install": "deno run -A https://deno.land/x/cache_injector/injector.ts ./ https://deno.land/x/deno_nrepl_client@9.9.9",
     "upgrade": "deno run -A https://deno.land/x/udd/main.ts $(find . -name '*.ts' | grep -v integration_test)",
-    "example-nrepl-server": "deno run -A npm:nbb nrepl-server :port 12345",
+    "example-nrepl-server": "clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version \"RELEASE\"}}}' -M -m nrepl.cmdline --port 12345",
     "example": "deno run -A example.ts"
   }
 }
