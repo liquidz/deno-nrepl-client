@@ -73,3 +73,15 @@ Deno.test("clone", async () => {
     "dummySession",
   );
 });
+
+Deno.test("close", async () => {
+  const client = new sut.NreplClientMock(
+    (_: bencode.BencodeObject): bencode.BencodeObject => {
+      return {};
+    },
+  );
+
+  asserts.assertEquals(client.isClosed, false);
+  await client.close();
+  asserts.assertEquals(client.isClosed, true);
+});

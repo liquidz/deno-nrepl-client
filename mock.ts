@@ -26,7 +26,8 @@ export class NreplClientMock implements NreplClient {
 
   #status: NreplStatus;
   #closed: boolean;
-  #closingSignal: async.Deferred<never>;
+  #closingSignal: async.Deferred<boolean>;
+  #startingPromise: Promise<void> | undefined;
   #relay: RelayFunction;
 
   constructor(relay: RelayFunction, option?: Option) {
@@ -49,10 +50,22 @@ export class NreplClientMock implements NreplClient {
     return this.#status;
   }
 
-  close() {
+  async close() {
     this.#closed = true;
-    this.#closingSignal.reject();
+    this.#status = "NotConnected";
+    this.#closingSignal.resolve();
+
+    if (this.#startingPromise != null) {
+      await this.#startingPromise;
+    }
   }
+
+  get closed(): Promise<void> {
+    return this.#startingPromise == null
+      ? Promise.resolve()
+      : this.#startingPromise;
+  }
+
   get isClosed() {
     return this.#closed;
   }
@@ -84,8 +97,23 @@ export class NreplClientMock implements NreplClient {
     return Promise.resolve(new NreplResponseImpl([response], option?.context));
   }
 
-  async start(): Promise<void> {
-    await this.#closingSignal;
+  async #start(): Promise<void> {
+    try {
+      await this.#closingSignal;
+    } catch (_) {
+      if (!this.isClosed) {
+        await this.close();
+      }
+    }
+
     return;
+  }
+
+  start(): boolean {
+    if (this.#startingPromise != null) {
+      return false;
+    }
+    this.#startingPromise = this.#start();
+    return true;
   }
 }
