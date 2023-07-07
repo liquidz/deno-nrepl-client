@@ -53,16 +53,26 @@ type SetupResult = {
   tearDown: () => Promise<void>;
 };
 
-async function setup(): Promise<SetupResult> {
+async function tryRemoveFile(path: string) {
   try {
-    await Deno.remove(portFilePath);
+    await Deno.remove(path);
   } catch (_) {
     // ignore
   }
+}
+
+async function setup(): Promise<SetupResult> {
+  await tryRemoveFile(portFilePath);
 
   // Start nREPL server
-  const command = new Deno.Command("deno", {
-    args: ["run", "-A", "npm:nbb", "nrepl-server"],
+  const command = new Deno.Command("clojure", {
+    args: [
+      "-Sdeps",
+      `{:deps {nrepl/nrepl {:mvn/version "RELEASE"}}}`,
+      "-M",
+      "-m",
+      "nrepl.cmdline",
+    ],
   });
   const process = command.spawn();
 
@@ -73,16 +83,14 @@ async function setup(): Promise<SetupResult> {
 
   // Connect to nREPL server and start client
   const conn = await nrepl.connect({ port: port });
-  const p = conn.start();
 
   return {
     conn,
     tearDown: async () => {
-      conn.close();
+      await conn.close();
       process.kill();
       await process.status;
-      await p;
-      await Deno.remove(portFilePath);
+      await tryRemoveFile(portFilePath);
     },
   };
 }
@@ -110,7 +118,7 @@ Deno.test("Integration test", async () => {
     try {
       asserts.assertEquals((await r.read()).value, {
         type: "out",
-        text: "hello",
+        text: "hello\n",
       });
     } finally {
       r.releaseLock();
