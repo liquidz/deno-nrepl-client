@@ -32,10 +32,10 @@ function testClient({
 }
 
 /* ----------------------------------------
- * writeRequest
+ * write
  * ---------------------------------------- */
 
-Deno.test("writeRequest", async () => {
+Deno.test("write", async () => {
   const strWriter = new io.StringWriter();
   const client = testClient({
     writable: streams.writableStreamFromWriter(strWriter),
@@ -49,7 +49,7 @@ Deno.test("writeRequest", async () => {
   });
 });
 
-Deno.test("writeRequest: assign id automatically", async () => {
+Deno.test("write: assign id automatically", async () => {
   const strWriter = new io.StringWriter();
   const client = testClient({
     writable: streams.writableStreamFromWriter(strWriter),
@@ -69,10 +69,10 @@ Deno.test("writeRequest: assign id automatically", async () => {
 });
 
 /* ----------------------------------------
- * readResponse
+ * read
  * ---------------------------------------- */
 
-Deno.test("readResponse", async () => {
+Deno.test("read", async () => {
   const client = testClient({
     readable: stringToReadableStream(bencode.encode({ test: "readResponse" })),
   });
@@ -82,7 +82,7 @@ Deno.test("readResponse", async () => {
   asserts.assertEquals(res.get("test"), ["readResponse"]);
 });
 
-Deno.test("readResponse with output", async () => {
+Deno.test("read with output", async () => {
   const messages: bencode.BencodeObject[] = [
     { test: "readResponse with output1" },
     { out: "readResponse with output2" },
@@ -108,6 +108,7 @@ Deno.test("readResponse with output", async () => {
   asserts.assertEquals((await outputReader.read()).value, {
     type: "out",
     text: "readResponse with output2",
+    context: undefined,
   });
 });
 
@@ -119,7 +120,7 @@ Deno.test("writeRequest: requestManager", async () => {
   const strWriter = new io.StringWriter();
   const expectedRes = new NreplResponseImpl(
     [
-      { id: "234", foo: "bar" },
+      { id: "234", foo: "bar", out: "hello" },
       { id: "234", foo: "baz", status: ["done"] },
     ],
     {
@@ -144,6 +145,13 @@ Deno.test("writeRequest: requestManager", async () => {
   asserts.assertEquals(resp1.get("foo"), ["bar"]);
   asserts.assertEquals(resp1.isDone(), false);
   asserts.assertEquals(resp1.context, expectedRes.context);
+
+  const outputReader = client.output.getReader();
+  asserts.assertEquals((await outputReader.read()).value, {
+    type: "out",
+    text: "hello",
+    context: expectedRes.context,
+  });
 
   const resp2 = await client.read();
   asserts.assertEquals(resp2.id(), "234");
