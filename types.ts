@@ -6,6 +6,11 @@ import { async, bencode } from "./deps.ts";
  */
 export type Context = Record<string, string>;
 
+export type BencodeWithContext = {
+  message: bencode.BencodeObject;
+  context: Context;
+};
+
 type RequestBody = {
   deferredResponse: async.Deferred<NreplResponse>;
   responses: bencode.BencodeObject[];
@@ -38,11 +43,12 @@ export type NreplOutputType = "out" | "err" | "pprint-out";
 export type NreplOutput = {
   readonly type: NreplOutputType;
   readonly text: string;
+  readonly context: Context;
 };
 
 export type NreplClient = {
   readonly conn: Deno.Conn;
-  readonly readable: ReadableStream<bencode.Bencode>;
+  readonly readable: ReadableStream<BencodeWithContext>;
   readonly writable: WritableStream<Uint8Array>;
   readonly output: ReadableStream<NreplOutput>;
 

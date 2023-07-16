@@ -1,4 +1,5 @@
 import {
+  BencodeWithContext,
   NreplClient,
   NreplOutput,
   NreplStatus,
@@ -6,7 +7,10 @@ import {
 } from "./types.ts";
 import { async, bencode, mockConn } from "./deps.ts";
 import { NreplResponseImpl } from "./impl/response.ts";
-import { BencodeObjectToNreplOutputStream } from "./impl/stream.ts";
+import {
+  AssociatingContextStream,
+  BencodeWithContextToNreplOutputStream,
+} from "./impl/stream.ts";
 
 export type RelayFunction = (
   msg: bencode.BencodeObject,
@@ -20,7 +24,7 @@ type Option = {
 
 export class NreplClientMock implements NreplClient {
   readonly conn: Deno.Conn;
-  readonly readable: ReadableStream<bencode.Bencode>;
+  readonly readable: ReadableStream<BencodeWithContext>;
   readonly writable: WritableStream<Uint8Array>;
   readonly output: ReadableStream<NreplOutput>;
 
@@ -35,10 +39,13 @@ export class NreplClientMock implements NreplClient {
     this.writable = this.conn.writable;
     const [strm1, strm2] = this.conn.readable
       .pipeThrough(new bencode.Uint8ArrayToBencodeStream())
+      .pipeThrough(new AssociatingContextStream({}))
       .tee();
 
     this.readable = strm1;
-    this.output = strm2.pipeThrough(new BencodeObjectToNreplOutputStream());
+    this.output = strm2.pipeThrough(
+      new BencodeWithContextToNreplOutputStream(),
+    );
 
     this.#relay = relay;
     this.#status = option?.status || "Waiting";
