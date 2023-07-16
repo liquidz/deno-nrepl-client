@@ -8,7 +8,7 @@ export type Context = Record<string, string>;
 
 export type BencodeWithContext = {
   message: bencode.BencodeObject;
-  context?: Context;
+  context: Context;
 };
 
 type RequestBody = {
@@ -43,7 +43,7 @@ export type NreplOutputType = "out" | "err" | "pprint-out";
 export type NreplOutput = {
   readonly type: NreplOutputType;
   readonly text: string;
-  readonly context?: Context;
+  readonly context: Context;
 };
 
 export type NreplClient = {

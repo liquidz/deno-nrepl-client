@@ -22,10 +22,10 @@ export class AssociatingContextStream extends TransformStream<
   ) {
     const id = chunk["id"];
     if (id == null || typeof id !== "string") {
-      controller.enqueue({ message: chunk, context: undefined });
+      controller.enqueue({ message: chunk, context: {} });
     } else {
       const reqBody = this.#reqManager[id];
-      controller.enqueue({ message: chunk, context: reqBody?.context });
+      controller.enqueue({ message: chunk, context: reqBody?.context ?? {} });
     }
   }
 }

@@ -46,30 +46,30 @@ Deno.test("AssociatingContextStream", async () => {
 
   asserts.assertEquals((await r.read()).value, {
     message: { id: "2" },
-    context: undefined,
+    context: {},
   });
 
   asserts.assertEquals((await r.read()).value, {
     message: { noid: "3" },
-    context: undefined,
+    context: {},
   });
 });
 
 Deno.test("BencodeWithContextToNreplOutputStream", async () => {
   const stream = testNreplOutputStream([
-    { message: { no: "1" } },
-    { message: { no: "2", out: "two" } },
-    { message: { no: "3" } },
+    { message: { no: "1" }, context: {} },
+    { message: { no: "2", out: "two" }, context: {} },
+    { message: { no: "3" }, context: {} },
     { message: { no: "4", "pprint-out": "four" }, context: { foo: "bar" } },
-    { message: { no: "5" } },
-    { message: { no: "6", err: "six" } },
+    { message: { no: "5" }, context: {} },
+    { message: { no: "6", err: "six" }, context: {} },
   ]);
   const r = stream.getReader();
 
   asserts.assertEquals((await r.read()).value, {
     type: "out",
     text: "two",
-    context: undefined,
+    context: {},
   });
   asserts.assertEquals((await r.read()).value, {
     type: "pprint-out",
@@ -79,7 +79,7 @@ Deno.test("BencodeWithContextToNreplOutputStream", async () => {
   asserts.assertEquals((await r.read()).value, {
     type: "err",
     text: "six",
-    context: undefined,
+    context: {},
   });
 
   r.releaseLock();

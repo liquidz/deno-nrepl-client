@@ -108,7 +108,7 @@ Deno.test("read with output", async () => {
   asserts.assertEquals((await outputReader.read()).value, {
     type: "out",
     text: "readResponse with output2",
-    context: undefined,
+    context: {},
   });
 });
 
