@@ -119,6 +119,7 @@ Deno.test("Integration test", async () => {
       asserts.assertEquals((await r.read()).value, {
         type: "out",
         text: "hello\n",
+        context: { foo: "bar" },
       });
     } finally {
       r.releaseLock();
