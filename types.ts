@@ -38,6 +38,7 @@ export type NreplOutputType = "out" | "err" | "pprint-out";
 export type NreplOutput = {
   readonly type: NreplOutputType;
   readonly text: string;
+  readonly context?: Context;
 };
 
 export type NreplClient = {
