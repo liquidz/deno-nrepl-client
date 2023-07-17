@@ -4,7 +4,7 @@ import { async, bencode } from "./deps.ts";
  * An arbitrary context record that can be specified on each requests.
  * This context record will be returned on NreplResponse.
  */
-export type Context = Record<string, string>;
+export type Context = Record<string, unknown>;
 
 export type BencodeWithContext = {
   message: bencode.BencodeObject;
