@@ -1,5 +1,5 @@
 import {
-  BencodeWithContext,
+  BencodeWithMeta,
   NreplClient,
   NreplOutput,
   NreplStatus,
@@ -8,8 +8,8 @@ import {
 import { async, bencode, mockConn } from "./deps.ts";
 import { NreplResponseImpl } from "./impl/response.ts";
 import {
-  AssociatingContextStream,
-  BencodeWithContextToNreplOutputStream,
+  AssociatingMetaStream,
+  BencodeWithMetaToNreplOutputStream,
 } from "./impl/stream.ts";
 
 export type RelayFunction = (
@@ -24,7 +24,7 @@ type Option = {
 
 export class NreplClientMock implements NreplClient {
   readonly conn: Deno.Conn;
-  readonly readable: ReadableStream<BencodeWithContext>;
+  readonly readable: ReadableStream<BencodeWithMeta>;
   readonly writable: WritableStream<Uint8Array>;
   readonly output: ReadableStream<NreplOutput>;
 
@@ -39,12 +39,12 @@ export class NreplClientMock implements NreplClient {
     this.writable = this.conn.writable;
     const [strm1, strm2] = this.conn.readable
       .pipeThrough(new bencode.Uint8ArrayToBencodeStream())
-      .pipeThrough(new AssociatingContextStream({}))
+      .pipeThrough(new AssociatingMetaStream({}))
       .tee();
 
     this.readable = strm1;
     this.output = strm2.pipeThrough(
-      new BencodeWithContextToNreplOutputStream(),
+      new BencodeWithMetaToNreplOutputStream(),
     );
 
     this.#relay = relay;
@@ -101,7 +101,7 @@ export class NreplClientMock implements NreplClient {
       response["new-session"] = crypto.randomUUID();
     }
 
-    return Promise.resolve(new NreplResponseImpl([response], option?.context));
+    return Promise.resolve(new NreplResponseImpl([response], option?.meta));
   }
 
   async #start(): Promise<void> {

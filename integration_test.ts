@@ -109,17 +109,17 @@ Deno.test("Integration test", async () => {
         code: `(do (println "hello") (+ 1 2 3))`,
         session: session,
       },
-      { context: { foo: "bar" } },
+      { meta: { foo: "bar" } },
     );
     asserts.assertEquals(evalRes.get("value"), ["6"]);
-    asserts.assertEquals(evalRes.context, { foo: "bar" });
+    asserts.assertEquals(evalRes.meta, { foo: "bar" });
 
     const r = conn.output.getReader();
     try {
       asserts.assertEquals((await r.read()).value, {
         type: "out",
         text: "hello\n",
-        context: { foo: "bar" },
+        meta: { foo: "bar" },
       });
     } finally {
       r.releaseLock();

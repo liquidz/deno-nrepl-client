@@ -1,5 +1,5 @@
 import {
-  BencodeWithContext,
+  BencodeWithMeta,
   NreplClient,
   NreplOutput,
   NreplResponse,
@@ -9,8 +9,8 @@ import {
 } from "../types.ts";
 import { NreplResponseImpl } from "./response.ts";
 import {
-  AssociatingContextStream,
-  BencodeWithContextToNreplOutputStream,
+  AssociatingMetaStream,
+  BencodeWithMetaToNreplOutputStream,
 } from "./stream.ts";
 import { async, bencode } from "../deps.ts";
 
@@ -18,7 +18,7 @@ const textEncoder = new TextEncoder();
 
 export class NreplClientImpl implements NreplClient {
   readonly conn: Deno.Conn;
-  readonly readable: ReadableStream<BencodeWithContext>;
+  readonly readable: ReadableStream<BencodeWithMeta>;
   readonly writable: WritableStream<Uint8Array>;
   readonly output: ReadableStream<NreplOutput>;
 
@@ -42,12 +42,12 @@ export class NreplClientImpl implements NreplClient {
     this.conn = conn;
     const [bencodeStream1, bencodeStream2] = (readable ?? this.conn.readable)
       .pipeThrough(new bencode.Uint8ArrayToBencodeStream())
-      .pipeThrough(new AssociatingContextStream(this.#reqManager))
+      .pipeThrough(new AssociatingMetaStream(this.#reqManager))
       .tee();
 
     this.readable = bencodeStream1;
     this.output = bencodeStream2.pipeThrough(
-      new BencodeWithContextToNreplOutputStream(),
+      new BencodeWithMetaToNreplOutputStream(),
     );
     this.writable = writable ?? this.conn.writable;
 
@@ -114,12 +114,12 @@ export class NreplClientImpl implements NreplClient {
         return new NreplResponseImpl([message]);
       }
 
-      const res = new NreplResponseImpl([message], reqBody.context);
+      const res = new NreplResponseImpl([message], reqBody.meta);
       reqBody.responses.push(message);
 
       if (res.isDone()) {
         reqBody.deferredResponse.resolve(
-          new NreplResponseImpl(reqBody.responses, reqBody.context),
+          new NreplResponseImpl(reqBody.responses, reqBody.meta),
         );
 
         //this.#reqManager.deleteRequest(id);;
@@ -168,14 +168,14 @@ export class NreplClientImpl implements NreplClient {
     // When you don't wait for responses
     if (!doesWaitResponse) {
       await this.#writeMessage(this.writable, message);
-      return Promise.resolve(new NreplResponseImpl([], option?.context || {}));
+      return Promise.resolve(new NreplResponseImpl([], option?.meta || {}));
     }
 
     const d = async.deferred<NreplResponse>();
 
     this.#reqManager[id] = {
       deferredResponse: d,
-      context: option?.context || {},
+      meta: option?.meta || {},
       responses: [],
     };
 

@@ -1,20 +1,20 @@
 import { async, bencode } from "./deps.ts";
 
 /**
- * An arbitrary context record that can be specified on each requests.
- * This context record will be returned on NreplResponse.
+ * An arbitrary meta data record that can be specified on each requests.
+ * This meta data record will be returned on NreplResponse.
  */
-export type Context = Record<string, unknown>;
+export type Meta = Record<string, unknown>;
 
-export type BencodeWithContext = {
+export type BencodeWithMeta = {
   message: bencode.BencodeObject;
-  context: Context;
+  meta: Meta;
 };
 
 type RequestBody = {
   deferredResponse: async.Deferred<NreplResponse>;
   responses: bencode.BencodeObject[];
-  context: Context;
+  meta: Meta;
 };
 
 /**
@@ -24,7 +24,7 @@ export type RequestManager = Record<string, RequestBody>;
 
 export type NreplResponse = {
   readonly responses: bencode.BencodeObject[];
-  context: Context;
+  meta: Meta;
   id(): string | null;
   get(key: string): bencode.Bencode[];
   getOne(key: string): bencode.Bencode;
@@ -34,7 +34,7 @@ export type NreplResponse = {
 export type NreplStatus = "Waiting" | "Evaluating" | "NotConnected";
 
 export type NreplWriteOption = {
-  context?: Context;
+  meta?: Meta;
   doesWaitResponse?: boolean;
 };
 
@@ -43,12 +43,12 @@ export type NreplOutputType = "out" | "err" | "pprint-out";
 export type NreplOutput = {
   readonly type: NreplOutputType;
   readonly text: string;
-  readonly context: Context;
+  readonly meta: Meta;
 };
 
 export type NreplClient = {
   readonly conn: Deno.Conn;
-  readonly readable: ReadableStream<BencodeWithContext>;
+  readonly readable: ReadableStream<BencodeWithMeta>;
   readonly writable: WritableStream<Uint8Array>;
   readonly output: ReadableStream<NreplOutput>;
 

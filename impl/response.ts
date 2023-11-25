@@ -1,13 +1,13 @@
-import { Context, NreplResponse } from "../types.ts";
+import { Meta, NreplResponse } from "../types.ts";
 import { bencode } from "../deps.ts";
 
 export class NreplResponseImpl implements NreplResponse {
   readonly responses: bencode.BencodeObject[];
-  readonly context: Context;
+  readonly meta: Meta;
 
-  constructor(responses: bencode.BencodeObject[], context?: Context) {
+  constructor(responses: bencode.BencodeObject[], meta?: Meta) {
     this.responses = responses;
-    this.context = context || {};
+    this.meta = meta || {};
   }
 
   id(): string | null {

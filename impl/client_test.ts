@@ -78,7 +78,7 @@ Deno.test("read", async () => {
   });
 
   const res = await client.read();
-  asserts.assertEquals(res.context, {});
+  asserts.assertEquals(res.meta, {});
   asserts.assertEquals(res.get("test"), ["readResponse"]);
 });
 
@@ -94,13 +94,13 @@ Deno.test("read with output", async () => {
 
   // responses
   const res1 = await client.read();
-  asserts.assertEquals(res1.context, {});
+  asserts.assertEquals(res1.meta, {});
   asserts.assertEquals(res1.get("test"), ["readResponse with output1"]);
 
   await client.read();
 
   const res3 = await client.read();
-  asserts.assertEquals(res3.context, {});
+  asserts.assertEquals(res3.meta, {});
   asserts.assertEquals(res3.get("test"), ["readResponse with output3"]);
 
   // outputs
@@ -108,7 +108,7 @@ Deno.test("read with output", async () => {
   asserts.assertEquals((await outputReader.read()).value, {
     type: "out",
     text: "readResponse with output2",
-    context: {},
+    meta: {},
   });
 });
 
@@ -137,27 +137,27 @@ Deno.test("writeRequest: requestManager", async () => {
 
   const p = client.write(
     { op: "dummy", id: "234" },
-    { context: expectedRes.context },
+    { meta: expectedRes.meta },
   );
 
   const resp1 = await client.read();
   asserts.assertEquals(resp1.id(), "234");
   asserts.assertEquals(resp1.get("foo"), ["bar"]);
   asserts.assertEquals(resp1.isDone(), false);
-  asserts.assertEquals(resp1.context, expectedRes.context);
+  asserts.assertEquals(resp1.meta, expectedRes.meta);
 
   const outputReader = client.output.getReader();
   asserts.assertEquals((await outputReader.read()).value, {
     type: "out",
     text: "hello",
-    context: expectedRes.context,
+    meta: expectedRes.meta,
   });
 
   const resp2 = await client.read();
   asserts.assertEquals(resp2.id(), "234");
   asserts.assertEquals(resp2.get("foo"), ["baz"]);
   asserts.assertEquals(resp2.isDone(), true);
-  asserts.assertEquals(resp2.context, expectedRes.context);
+  asserts.assertEquals(resp2.meta, expectedRes.meta);
 
   const actualRes = await p;
   asserts.assertEquals(expectedRes, actualRes);

@@ -1,9 +1,9 @@
 import { bencode } from "../deps.ts";
-import { BencodeWithContext, NreplOutput, RequestManager } from "../types.ts";
+import { BencodeWithMeta, NreplOutput, RequestManager } from "../types.ts";
 
-export class AssociatingContextStream extends TransformStream<
+export class AssociatingMetaStream extends TransformStream<
   bencode.BencodeObject,
-  BencodeWithContext
+  BencodeWithMeta
 > {
   #reqManager: RequestManager;
   constructor(reqManager: RequestManager) {
@@ -18,20 +18,20 @@ export class AssociatingContextStream extends TransformStream<
 
   #handle(
     chunk: bencode.BencodeObject,
-    controller: TransformStreamDefaultController<BencodeWithContext>,
+    controller: TransformStreamDefaultController<BencodeWithMeta>,
   ) {
     const id = chunk["id"];
     if (id == null || typeof id !== "string") {
-      controller.enqueue({ message: chunk, context: {} });
+      controller.enqueue({ message: chunk, meta: {} });
     } else {
       const reqBody = this.#reqManager[id];
-      controller.enqueue({ message: chunk, context: reqBody?.context ?? {} });
+      controller.enqueue({ message: chunk, meta: reqBody?.meta ?? {} });
     }
   }
 }
 
-export class BencodeWithContextToNreplOutputStream extends TransformStream<
-  BencodeWithContext,
+export class BencodeWithMetaToNreplOutputStream extends TransformStream<
+  BencodeWithMeta,
   NreplOutput
 > {
   constructor() {
@@ -43,13 +43,13 @@ export class BencodeWithContextToNreplOutputStream extends TransformStream<
   }
 
   #handle(
-    chunk: BencodeWithContext,
+    chunk: BencodeWithMeta,
     controller: TransformStreamDefaultController<NreplOutput>,
   ) {
-    const { message, context } = chunk;
+    const { message, meta } = chunk;
 
     if (message["out"] != null && typeof message["out"] === "string") {
-      controller.enqueue({ type: "out", text: message["out"], context });
+      controller.enqueue({ type: "out", text: message["out"], meta });
     } else if (
       message["pprint-out"] != null &&
       typeof message["pprint-out"] === "string"
@@ -57,10 +57,10 @@ export class BencodeWithContextToNreplOutputStream extends TransformStream<
       controller.enqueue({
         type: "pprint-out",
         text: message["pprint-out"],
-        context,
+        meta,
       });
     } else if (message["err"] != null && typeof message["err"] === "string") {
-      controller.enqueue({ type: "err", text: message["err"], context });
+      controller.enqueue({ type: "err", text: message["err"], meta });
     }
   }
 }

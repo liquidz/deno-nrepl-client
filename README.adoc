@@ -21,16 +21,16 @@ const resp = await conn.write(
     code: `(do (println "hello") (+ 1 2))`,
   },
   {
-    context: { foo: "any value" },
+    meta: { foo: "any value" },
   },
 );
-console.log(`result => ${resp.getOne("value")} (context: ${resp.context.foo})`);
+console.log(`result => ${resp.getOne("value")} (meta: ${resp.meta.foo})`);
 
 // Fetch standard outputs/errors from stream
 Promise.race([
   (async () => {
     for await (const o of conn.output) {
-      console.log(`${o.type} => ${o.text} (context: ${o.context.foo})`);
+      console.log(`${o.type} => ${o.text} (meta: ${o.meta.foo})`);
     }
   })(),
   conn.closed,
