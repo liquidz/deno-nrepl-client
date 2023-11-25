@@ -1,5 +1,5 @@
 import { async, bencode } from "../deps.ts";
-import { asserts, streams } from "../test_deps.ts";
+import { asserts } from "../test_deps.ts";
 import {
   BencodeWithContext,
   NreplOutput,
@@ -13,17 +13,17 @@ function testBencodeWithContextStream(
   messages: bencode.BencodeObject[],
   reqManager: RequestManager,
 ): ReadableStream<BencodeWithContext> {
-  return streams
-    .readableStreamFromIterable<bencode.BencodeObject>(messages)
-    .pipeThrough(new sut.AssociatingContextStream(reqManager));
+  return ReadableStream.from<bencode.BencodeObject>(messages).pipeThrough(
+    new sut.AssociatingContextStream(reqManager),
+  );
 }
 
 function testNreplOutputStream(
   messages: BencodeWithContext[],
 ): ReadableStream<NreplOutput> {
-  return streams
-    .readableStreamFromIterable<BencodeWithContext>(messages)
-    .pipeThrough(new sut.BencodeWithContextToNreplOutputStream());
+  return ReadableStream.from<BencodeWithContext>(messages).pipeThrough(
+    new sut.BencodeWithContextToNreplOutputStream(),
+  );
 }
 
 Deno.test("AssociatingContextStream", async () => {
